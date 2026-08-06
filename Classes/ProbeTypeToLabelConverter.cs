@@ -15,7 +15,7 @@ public class ProbeTypeToLabelConverter : IValueConverter
 		case ProbeType.Tcp:
 			return "TCP";
 		case ProbeType.Service:
-			return "SVC";
+			return "SERVICE";
 		case ProbeType.Dns:
 			return "DNS";
 		case ProbeType.Traceroute:

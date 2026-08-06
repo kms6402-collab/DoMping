@@ -336,8 +336,31 @@
                   <Border BorderThickness="1" Padding="7,2" HorizontalAlignment="Left" BorderBrush="{Binding Status, Converter={StaticResource ProbeStatusToBackgroundBrushConverter}}">
                     <TextBlock FontSize="10" FontWeight="Bold" Text="{Binding Status, Converter={StaticResource ProbeStatusToTagTextConverter}}" Foreground="{Binding Status, Converter={StaticResource ProbeStatusToBackgroundBrushConverter}}" />
                   </Border>
-                  <Border BorderThickness="1" Padding="7,2" Margin="6,0,0,0" HorizontalAlignment="Left" BorderBrush="#5f7d6c">
-                    <TextBlock FontSize="10" FontWeight="Bold" Text="{Binding Type, Converter={StaticResource ProbeTypeToLabelConverter}}" Foreground="#5f7d6c" />
+                  <Border BorderThickness="1" Padding="7,2" Margin="6,0,0,0" HorizontalAlignment="Left">
+                    <FrameworkElement.Style>
+                      <Style TargetType="{x:Type Border}">
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="BorderBrush" Value="#5f7d6c" />
+                        <Style.Triggers>
+                          <DataTrigger Value="Service" Binding="{Binding Path=Type}">
+                            <Setter Property="Background" Value="#ffeb3b" />
+                            <Setter Property="BorderBrush" Value="#000000" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </FrameworkElement.Style>
+                    <TextBlock FontSize="10" FontWeight="Bold" Text="{Binding Type, Converter={StaticResource ProbeTypeToLabelConverter}}">
+                      <FrameworkElement.Style>
+                        <Style TargetType="{x:Type TextBlock}">
+                          <Setter Property="Foreground" Value="#5f7d6c" />
+                          <Style.Triggers>
+                            <DataTrigger Value="Service" Binding="{Binding Path=Type}">
+                              <Setter Property="Foreground" Value="#000000" />
+                            </DataTrigger>
+                          </Style.Triggers>
+                        </Style>
+                      </FrameworkElement.Style>
+                    </TextBlock>
                   </Border>
                 </StackPanel>
                 <!-- service port chips: shown right under the status badges so port state is visible without scrolling -->
