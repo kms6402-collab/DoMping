@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AppVersion>1.5.0</AppVersion>
+    <AssemblyName>DoMping_v$(AppVersion)</AssemblyName>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>True</UseWPF>
+    <UseWindowsForms>True</UseWindowsForms>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace></RootNamespace>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <Version>$(AppVersion).0</Version>
+    <NoWarn>CA1416</NoWarn>
+    <!-- Framework-dependent build: requires the .NET 10 Desktop Runtime already
+         installed on the target PC (see the Help window for the download link).
+         PublishSingleFile only merges this app's OWN dll/runtimeconfig into the
+         exe on `dotnet publish` - it does NOT embed the .NET runtime itself, so
+         the published exe stays small. If the runtime is missing, the native
+         apphost automatically shows Windows' own "install .NET" prompt with a
+         download link before any of our managed code even runs.
+         RuntimeIdentifier/SelfContained are intentionally NOT set here - if they
+         were, plain `dotnet build` would silently redirect its output to a
+         bin\...\win-x64\ subfolder. Instead pass them on the publish command:
+         dotnet publish -c Release -r win-x64 -p:SelfContained=false -->
+    <PublishSingleFile>true</PublishSingleFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="domping.ico" />
+    <None Remove="resources\bomb-16.png" />
+    <EmbeddedResource Include="domping.ico" LogicalName="domping.ico" />
+    <EmbeddedResource Include="resources\bomb-16.png" LogicalName="resources/bomb-16.png" />
+  </ItemGroup>
+
+</Project>

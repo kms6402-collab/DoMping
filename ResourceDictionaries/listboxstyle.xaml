@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style x:Key="ListBoxItemNoHighlightStyle" TargetType="{x:Type ListBoxItem}">
+    <Setter Property="Padding" Value="5,1" />
+    <Setter Property="HorizontalContentAlignment" Value="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource FindAncestor, AncestorLevel=1, AncestorType={x:Type ItemsControl}}}" />
+    <Setter Property="VerticalContentAlignment" Value="{Binding VerticalContentAlignment, RelativeSource={RelativeSource FindAncestor, AncestorLevel=1, AncestorType={x:Type ItemsControl}}}" />
+    <Setter Property="Background" Value="#00FFFFFF" />
+    <Setter Property="BorderBrush" Value="#00FFFFFF" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type ListBoxItem}">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Ellipse Height="4" Width="4" Fill="#5f7d6c" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10,0,0,0" />
+            <Border Name="Bd" Grid.Column="1" BorderBrush="{TemplateBinding Control.BorderBrush}" BorderThickness="{TemplateBinding Control.BorderThickness}" Background="{TemplateBinding Control.Background}" Padding="{TemplateBinding Control.Padding}">
+              <ContentPresenter ContentTemplate="{TemplateBinding ContentControl.ContentTemplate}" Content="{TemplateBinding ContentControl.Content}" ContentStringFormat="{TemplateBinding ContentControl.ContentStringFormat}" HorizontalAlignment="{TemplateBinding Control.HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding Control.VerticalContentAlignment}" />
+            </Border>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter TargetName="Bd" Property="TextElement.Foreground" Value="{StaticResource {x:Static SystemColors.GrayTextBrushKey}}" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <SolidColorBrush x:Key="ListBox.Static.Background" Color="#10160f" />
+  <SolidColorBrush x:Key="ListBox.Static.Foreground" Color="#ffffff" />
+  <SolidColorBrush x:Key="ListBox.Static.Border" Color="#223028" />
+  <Style x:Key="FavoritesListBox" TargetType="{x:Type ListBox}">
+    <Setter Property="Background" Value="{StaticResource ListBox.Static.Background}" />
+    <Setter Property="Foreground" Value="{StaticResource ListBox.Static.Foreground}" />
+    <Setter Property="BorderBrush" Value="{StaticResource ListBox.Static.Border}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="ListBox.SelectionMode" Value="Single" />
+    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
+    <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+    <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+    <Setter Property="ScrollViewer.PanningMode" Value="Both" />
+    <Setter Property="Stylus.IsFlicksEnabled" Value="False" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type ListBox}">
+          <Border Name="Bd" BorderBrush="{TemplateBinding Control.BorderBrush}" BorderThickness="{TemplateBinding Control.BorderThickness}" Background="{TemplateBinding Control.Background}" Padding="0" SnapsToDevicePixels="True">
+            <ScrollViewer Focusable="False" Padding="{TemplateBinding Control.Padding}">
+              <ItemsPresenter SnapsToDevicePixels="{TemplateBinding UIElement.SnapsToDevicePixels}" />
+            </ScrollViewer>
+          </Border>
+          <ControlTemplate.Triggers>
+            <MultiTrigger>
+              <MultiTrigger.Conditions>
+                <Condition Property="ItemsControl.IsGrouping" Value="True" />
+                <Condition Property="VirtualizingPanel.IsVirtualizingWhenGrouping" Value="False" />
+              </MultiTrigger.Conditions>
+              <Setter Property="ScrollViewer.CanContentScroll" Value="False" />
+            </MultiTrigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+  <SolidColorBrush x:Key="Item.MouseOver.Background" Color="#301f6b46" />
+  <SolidColorBrush x:Key="Item.MouseOver.Border" Color="#501f6b46" />
+  <SolidColorBrush x:Key="Item.Selected.Background" Color="#1f6b46" />
+  <SolidColorBrush x:Key="Item.Selected.Foreground" Color="#ffffff" />
+  <SolidColorBrush x:Key="Item.Selected.Border" Color="#33ff99" />
+  <Style x:Key="FavoritesListBoxItemsStyle" TargetType="{x:Type ListBoxItem}">
+    <Setter Property="UIElement.SnapsToDevicePixels" Value="True" />
+    <Setter Property="Padding" Value="4,1" />
+    <Setter Property="HorizontalContentAlignment" Value="{Binding HorizontalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" />
+    <Setter Property="VerticalContentAlignment" Value="{Binding VerticalContentAlignment, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}" />
+    <Setter Property="Background" Value="#00FFFFFF" />
+    <Setter Property="BorderBrush" Value="#00FFFFFF" />
+    <Setter Property="BorderThickness" Value="0,1" />
+    <Setter Property="FrameworkElement.FocusVisualStyle" Value="{StaticResource FocusVisual}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type ListBoxItem}">
+          <Border Name="Bd" BorderBrush="{TemplateBinding Control.BorderBrush}" BorderThickness="{TemplateBinding Control.BorderThickness}" Background="{TemplateBinding Control.Background}" Padding="{TemplateBinding Control.Padding}" SnapsToDevicePixels="True">
+            <ContentPresenter HorizontalAlignment="{TemplateBinding Control.HorizontalContentAlignment}" SnapsToDevicePixels="{TemplateBinding UIElement.SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding Control.VerticalContentAlignment}" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="UIElement.IsMouseOver" Value="True">
+              <Setter TargetName="Bd" Property="Border.Background" Value="{StaticResource Item.MouseOver.Background}" />
+              <Setter TargetName="Bd" Property="Border.BorderBrush" Value="{StaticResource Item.MouseOver.Border}" />
+            </Trigger>
+            <Trigger Property="ListBoxItem.IsSelected" Value="True">
+              <Setter TargetName="Bd" Property="Border.Background" Value="{StaticResource Item.Selected.Background}" />
+              <Setter TargetName="Bd" Property="Border.BorderBrush" Value="{StaticResource Item.Selected.Border}" />
+              <Setter TargetName="Bd" Property="TextElement.Foreground" Value="{StaticResource Item.Selected.Foreground}" />
+              <Setter TargetName="Bd" Property="TextElement.FontWeight" Value="SemiBold" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+</ResourceDictionary>

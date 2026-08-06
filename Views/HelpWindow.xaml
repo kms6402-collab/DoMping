@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Window x:Class="DoMping.Views.HelpWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="DoMping Help" UseLayoutRounding="True" Height="520" Width="520" Background="#0a0f0c" WindowStartupLocation="CenterScreen" ResizeMode="CanResize" xmlns:views="clr-namespace:DoMping.Views;assembly=DoMping" PreviewKeyDown="Window_PreviewKeyDown" Loaded="Window_Loaded" Closed="Window_Closed">
+  <FrameworkElement.Resources>
+    <ResourceDictionary>
+      <Style x:Key="{x:Type TextBlock}" TargetType="{x:Type TextBlock}">
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, Courier New" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="#ffffff" />
+      </Style>
+      <Style x:Key="TitleText" BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="26" />
+        <Setter Property="FontFamily" Value="Cascadia Mono, Consolas" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="#33ff99" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+      </Style>
+      <Style x:Key="VersionText" BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="#5f7d6c" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="Margin" Value="0,2,0,0" />
+      </Style>
+      <Style x:Key="HyperlinkStyle" BasedOn="{StaticResource {x:Type Hyperlink}}" TargetType="{x:Type Hyperlink}">
+        <Setter Property="Inline.TextDecorations" Value="None" />
+        <Setter Property="Foreground" Value="#33ff99" />
+      </Style>
+      <Style x:Key="ShortcutKeyText" BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontFamily" Value="Cascadia Mono, Consolas" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="#33ff99" />
+        <Setter Property="Margin" Value="0,0,14,4" />
+      </Style>
+      <Style x:Key="ShortcutDescText" BasedOn="{StaticResource {x:Type TextBlock}}" TargetType="{x:Type TextBlock}">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="#5f7d6c" />
+        <Setter Property="Margin" Value="0,0,0,4" />
+      </Style>
+    </ResourceDictionary>
+  </FrameworkElement.Resources>
+  <Grid Margin="30,22,30,22">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel VerticalAlignment="Center">
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
+        <Image Source="/DoMping.ico" Width="32" Height="32" Margin="0,0,12,0" />
+        <TextBlock Style="{StaticResource TitleText}" Text="DoMping">
+          <UIElement.Effect>
+            <DropShadowEffect ShadowDepth="4" Direction="330" Color="Black" Opacity="0.15" BlurRadius="4" />
+          </UIElement.Effect>
+        </TextBlock>
+      </StackPanel>
+      <TextBlock Name="Version" Style="{StaticResource VersionText}" Text="Version X.XXXX.XXXX" />
+      <TextBlock Name="Copyright" Style="{StaticResource VersionText}" Text="A fork of vmPing by Ryan Smith, rebranded and extended" />
+      <TextBlock Style="{StaticResource VersionText}">
+        <Hyperlink NavigateUri="https://github.com/R-Smith/vmPing" Style="{StaticResource HyperlinkStyle}" RequestNavigate="Hyperlink_RequestNavigate">https://github.com/R-Smith/vmPing</Hyperlink>
+      </TextBlock>
+      <Rectangle Margin="0,18,0,18" HorizontalAlignment="Stretch" Fill="#223028" Height="1" />
+      <TextBlock TextAlignment="Left" LineHeight="20">DoMping monitors many hosts at once, pinging them over ICMP in parallel and showing each one as a color-coded status tile so you can spot trouble at a glance. Beyond plain ping, it can watch a single TCP port, run a multi-port TCP/UDP service check, resolve DNS, or trace the route to a host. Alerts can pop up, play a sound, or send email when a host changes state, and every host's output can optionally be logged to a file.</TextBlock>
+      <TextBlock Margin="0,20,0,8" FontFamily="Cascadia Mono, Consolas" FontWeight="SemiBold" FontSize="13" Foreground="#33ff99" Text="QUICK REFERENCE" />
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition />
+          <RowDefinition />
+          <RowDefinition />
+          <RowDefinition />
+          <RowDefinition />
+          <RowDefinition />
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource ShortcutKeyText}" Text="host" />
+        <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource ShortcutDescText}" Text="ping the host" />
+        <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource ShortcutKeyText}" Text="host:port" />
+        <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource ShortcutDescText}" Text="check a TCP port" />
+        <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource ShortcutKeyText}" Text="S/host" />
+        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource ShortcutDescText}" Text="check configured service ports" />
+        <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource ShortcutKeyText}" Text="D/host" />
+        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource ShortcutDescText}" Text="DNS lookup" />
+        <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource ShortcutKeyText}" Text="T/host" />
+        <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource ShortcutDescText}" Text="traceroute" />
+        <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource ShortcutKeyText}" Text="Alt-A" />
+        <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource ShortcutDescText}" Text="add a host" />
+      </Grid>
+      <Rectangle Margin="0,18,0,14" HorizontalAlignment="Stretch" Fill="#223028" Height="1" />
+      <TextBlock FontFamily="Cascadia Mono, Consolas" FontWeight="SemiBold" FontSize="13" Foreground="#33ff99" Text="REQUIREMENTS" Margin="0,0,0,8" />
+      <TextBlock TextAlignment="Left" LineHeight="20">DoMping is a small download because it does not bundle .NET inside the .exe - it needs the <Bold>.NET 10 Desktop Runtime</Bold> already installed on this PC (Windows 10/11, x64). If DoMping won't start, install it from:</TextBlock>
+      <TextBlock Margin="0,6,0,0" TextAlignment="Left">
+        <Hyperlink NavigateUri="https://dotnet.microsoft.com/download/dotnet/10.0" Style="{StaticResource HyperlinkStyle}" RequestNavigate="Hyperlink_RequestNavigate">https://dotnet.microsoft.com/download/dotnet/10.0</Hyperlink>
+      </TextBlock>
+      <TextBlock TextAlignment="Left" Margin="0,6,0,0" Foreground="#5f7d6c" FontSize="13">Choose the "Desktop Runtime" x64 installer (not the SDK) under .NET 10.0. Windows Update usually keeps it current, so this is normally only needed once.</TextBlock>
+    </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</Window>

@@ -1,0 +1,514 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Window x:Class="DoMping.Views.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:classes="clr-namespace:DoMping.Classes" xmlns:c="clr-namespace:DoMping.Controls" xmlns:resource="clr-namespace:DoMping.Properties" Title="DoMping" UseLayoutRounding="False" SnapsToDevicePixels="True" Height="400" Width="800" MinHeight="200" MinWidth="350" Background="#0a0f0c" FontFamily="Cascadia Mono, Consolas" xmlns:views="clr-namespace:DoMping.Views" Loaded="Window_Loaded" StateChanged="Window_StateChanged" Closing="Window_Closing" ContentRendered="Window_ContentRendered" IsVisibleChanged="Window_IsVisibleChanged">
+  <FrameworkElement.Resources>
+    <ResourceDictionary>
+      <PopupAnimation x:Key="{x:Static SystemParameters.MenuPopupAnimationKey}">None</PopupAnimation>
+      <ControlTemplate x:Key="TextBoxControlTemplate" TargetType="{x:Type TextBox}">
+        <Grid>
+          <Border Name="border" CornerRadius="0" SnapsToDevicePixels="True" Background="{TemplateBinding Control.Background}" BorderThickness="{TemplateBinding Control.BorderThickness}" BorderBrush="{TemplateBinding Control.BorderBrush}">
+            <ScrollViewer Name="PART_ContentHost" />
+          </Border>
+          <TextBlock Name="placeholderText" Text="Enter a hostname" Visibility="Hidden" FontSize="12" Opacity="0.6" Foreground="#5f7d6c" HorizontalAlignment="Left" VerticalAlignment="Center" Padding="5,0,0,0" IsHitTestVisible="False" />
+        </Grid>
+        <ControlTemplate.Triggers>
+          <Trigger Property="UIElement.IsEnabled" Value="False">
+            <Setter Property="Control.Foreground" Value="#333388" />
+          </Trigger>
+          <MultiTrigger>
+            <MultiTrigger.Conditions>
+              <Condition Property="TextBox.Text" Value="" />
+              <Condition Property="UIElement.IsKeyboardFocused" Value="True" />
+            </MultiTrigger.Conditions>
+            <MultiTrigger.Setters>
+              <Setter TargetName="placeholderText" Property="UIElement.Visibility" Value="Visible" />
+            </MultiTrigger.Setters>
+          </MultiTrigger>
+        </ControlTemplate.Triggers>
+      </ControlTemplate>
+    </ResourceDictionary>
+  </FrameworkElement.Resources>
+  <DockPanel Background="#0a0f0c">
+    <DockPanel DockPanel.Dock="Top" Background="#0a0f0c" LastChildFill="True">
+      <TextBlock Name="AppTitleText" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="10,0,18,0" FontSize="12" FontWeight="Bold" Foreground="#33ff99" IsHitTestVisible="False" />
+      <Border DockPanel.Dock="Left" Width="1" Margin="0,7" Background="#223028" />
+    <Menu FontStretch="Normal" Background="#0a0f0c">
+      <FrameworkElement.Resources>
+        <ResourceDictionary>
+          <Style x:Key="{x:Type MenuItem}" TargetType="{x:Type MenuItem}" BasedOn="{StaticResource MenuItemStyle}" />
+        </ResourceDictionary>
+      </FrameworkElement.Resources>
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <DockPanel HorizontalAlignment="Stretch" LastChildFill="False" Background="#0a0f0c" />
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+      <MenuItem Name="AddProbeMenu" FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New">
+        <HeaderedItemsControl.Header>
+          <AccessText Text="{x:Static resource:Strings.Toolbar_Add}" FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New" VerticalAlignment="Center" />
+        </HeaderedItemsControl.Header>
+        <MenuItem.Icon>
+          <Image Source="{StaticResource icon.add}" VerticalAlignment="Center" Width="16" Height="16" />
+        </MenuItem.Icon>
+      </MenuItem>
+      <MenuItem FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New">
+        <HeaderedItemsControl.Header>
+          <AccessText Text="{x:Static resource:Strings.Toolbar_Columns}" FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New" VerticalAlignment="Center" />
+        </HeaderedItemsControl.Header>
+        <MenuItem.Icon>
+          <Image Source="{StaticResource icon.columns-grid}" VerticalAlignment="Center" Width="16" Height="16" />
+        </MenuItem.Icon>
+        <StackPanel Orientation="Horizontal">
+          <Label Margin="0,0,15,0" Width="30" FontSize="12" Foreground="#ffffff" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content="{Binding ElementName=ColumnCount, Path=Value}" />
+          <Slider Name="ColumnCount" Style="{DynamicResource SliderStyle}" Minimum="1" Maximum="10" Value="3" TickFrequency="1" SmallChange="1" TickPlacement="BottomRight" IsSnapToTickEnabled="True" Width="200" Foreground="#202020" Margin="0,8" ValueChanged="ColumnCount_ValueChanged" />
+        </StackPanel>
+      </MenuItem>
+      <MenuItem Name="StartStopMenu" FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New">
+        <HeaderedItemsControl.Header>
+          <AccessText Name="StartStopMenuHeader" FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New" VerticalAlignment="Center" Text="{Binding Path=(classes:Probe.ActiveCount), Converter={StaticResource ProbeCountToGlobalStartStopText}}" />
+        </HeaderedItemsControl.Header>
+        <MenuItem.Icon>
+          <Image Name="StartStopMenuImage" VerticalAlignment="Center" Width="16" Height="16" Source="{Binding Path=(classes:Probe.ActiveCount), Converter={StaticResource ProbeCountToGlobalStartStopIcon}}" />
+        </MenuItem.Icon>
+      </MenuItem>
+      <MenuItem Name="FilterMenu" Header="FILTER" FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New">
+        <MenuItem Name="FilterAll" Header="All" IsCheckable="True" IsChecked="True" Click="FilterAll_Click" />
+        <Separator />
+        <MenuItem Name="FilterUp" Header="Up" IsCheckable="True" Click="FilterUp_Click" />
+        <MenuItem Name="FilterDown" Header="Down / Timeout" IsCheckable="True" Click="FilterDown_Click" />
+        <MenuItem Name="FilterSlow" Header="Slow" IsCheckable="True" Click="FilterSlow_Click" />
+        <MenuItem Name="FilterScanning" Header="Scanning" IsCheckable="True" Click="FilterScanning_Click" />
+        <MenuItem Name="FilterError" Header="Error" IsCheckable="True" Click="FilterError_Click" />
+        <MenuItem Name="FilterIdle" Header="Idle" IsCheckable="True" Click="FilterIdle_Click" />
+      </MenuItem>
+      <MenuItem Width="40" DockPanel.Dock="Right" Template="{StaticResource TopLevelHeaderNoPaddingTemplate}">
+        <MenuItem.Icon>
+          <Image Source="{StaticResource icon.chevron-circle-down}" VerticalAlignment="Center" HorizontalAlignment="Center" Width="16" Height="16" />
+        </MenuItem.Icon>
+        <MenuItem Name="OptionsMenu" Header="{x:Static resource:Strings.Menu_Options}" InputGestureText="F10">
+          <MenuItem.Icon>
+            <Image Source="{StaticResource icon.options}" VerticalAlignment="Center" Width="16" Height="16" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <Separator />
+        <MenuItem Name="StatusHistoryMenu" Header="{x:Static resource:Strings.Menu_StatusHistory}" InputGestureText="F12">
+          <MenuItem.Icon>
+            <Image Source="{StaticResource icon.status-history}" VerticalAlignment="Center" Width="16" Height="16" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Name="MultiInputMenu" Header="Input Addresses" InputGestureText="F2">
+          <MenuItem.Icon>
+            <Image Source="{StaticResource icon.input-addresses}" VerticalAlignment="Center" Width="16" Height="16" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Header="{x:Static resource:Strings.Menu_PopupAlerts}">
+          <MenuItem Name="PopupNever" Header="{x:Static resource:Strings.Notification_Never}" IsCheckable="True" Click="PopupNever_Click" />
+          <MenuItem Name="PopupWhenMinimized" Header="{x:Static resource:Strings.Notification_WhenMinimized}" IsCheckable="True" Click="PopupWhenMinimized_Click" />
+          <MenuItem Name="PopupAlways" Header="{x:Static resource:Strings.Notification_Always}" IsCheckable="True" Click="PopupAlways_Click" />
+        </MenuItem>
+        <Separator />
+        <MenuItem Name="FavoritesMenu" Header="{x:Static resource:Strings.Menu_FavoriteSets}">
+          <MenuItem Header="{x:Static resource:Strings.Menu_SaveToFavorites}" Click="CreateFavorite_Click">
+            <MenuItem.Icon>
+              <Image Source="{StaticResource icon.new-favorite}" VerticalAlignment="Center" Width="16" Height="16" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <MenuItem Header="{x:Static resource:Strings.Menu_ManageFavorites}" Click="ManageFavorites_Click">
+            <MenuItem.Icon>
+              <Image Source="{StaticResource icon.favorite}" VerticalAlignment="Center" Width="16" Height="16" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <Separator />
+        </MenuItem>
+        <MenuItem Name="AliasesMenu" Header="{x:Static resource:Strings.Menu_Aliases}">
+          <MenuItem Header="{x:Static resource:Strings.Menu_ManageAliases}" Click="ManageAliases_Click">
+            <MenuItem.Icon>
+              <Image Source="{StaticResource icon.alias}" VerticalAlignment="Center" Width="16" Height="16" />
+            </MenuItem.Icon>
+          </MenuItem>
+          <Separator />
+        </MenuItem>
+        <Separator />
+        <MenuItem Name="TracerouteMenu" Header="{x:Static resource:Strings.Menu_Traceroute}" InputGestureText="Ctrl-T">
+          <MenuItem.Icon>
+            <Image Source="{StaticResource icon.route}" VerticalAlignment="Center" Width="16" Height="16" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Name="FloodHostMenu" Header="{x:Static resource:Strings.Menu_FloodHost}" InputGestureText="Ctrl-F">
+          <MenuItem.Icon>
+            <Image Source="/Resources/bomb-16.png" VerticalAlignment="Center" Width="16" Height="16" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Name="NewInstanceMenu" Header="DoMping" InputGestureText="Ctrl-N">
+          <MenuItem.Icon>
+            <Image Source="{StaticResource icon.domping-logo-simple}" VerticalAlignment="Center" Width="16" Height="16" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <Separator />
+        <MenuItem Name="HelpMenu" Header="{x:Static resource:Strings.Menu_Help}" InputGestureText="F1">
+          <MenuItem.Icon>
+            <Image Source="{StaticResource icon.question-circle}" VerticalAlignment="Center" Width="16" Height="16" />
+          </MenuItem.Icon>
+        </MenuItem>
+      </MenuItem>
+    </Menu>
+    </DockPanel>
+    <ItemsControl Name="ProbeItemsControl" IsTabStop="False" Focusable="False" BorderThickness="0,1,0,0" BorderBrush="#111" Margin="0,0,-2,-2">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate>
+          <Border BorderBrush="#223028" BorderThickness="0,0,1,1" Margin="0" CornerRadius="0" Background="#10160f">
+            <Grid Name="gridItemsControl">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+              <Image Grid.Row="0" Grid.RowSpan="5" Source="{StaticResource icon.domping-logo-simple}" Width="72" Height="72" IsHitTestVisible="False" Opacity="0.05" Visibility="{Binding IsActive, Converter={StaticResource InverseBooleanToVisibilityConverter}, NotifyOnTargetUpdated=True}" TargetUpdated="Logo_TargetUpdated" />
+              <Grid Grid.Row="0" AllowDrop="True" Drop="Probe_Drop">
+                <FrameworkElement.Style>
+                  <Style TargetType="{x:Type Grid}">
+                    <Setter Property="Background" Value="#00000000" />
+                    <Style.Triggers>
+                      <DataTrigger Value="True" Binding="{Binding ElementName=gridItemsControl, Path=IsMouseOver}">
+                        <Setter Property="Background" Value="#17201a" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </FrameworkElement.Style>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Label Name="txtEditAlias" Background="#00FFFFFF" FontSize="12" VerticalContentAlignment="Center" HorizontalContentAlignment="Stretch" Padding="5,0,0,0" Margin="0" FontWeight="Bold" AllowDrop="True" Foreground="#ffffff" Drop="Probe_Drop" PreviewMouseMove="ProbeTitle_PreviewMouseMove">
+                  <Label.ContentTemplate>
+                    <DataTemplate>
+                      <TextBlock Text="{Binding}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                    </DataTemplate>
+                  </Label.ContentTemplate>
+                  <Label.Content>
+                    <MultiBinding Converter="{StaticResource AliasOrHostnameConverter}" NotifyOnTargetUpdated="True">
+                      <Binding Path="Alias" UpdateSourceTrigger="PropertyChanged" />
+                      <Binding Path="Hostname" UpdateSourceTrigger="PropertyChanged" />
+                    </MultiBinding>
+                  </Label.Content>
+                </Label>
+                <TextBlock Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding LatencyText}" FontSize="11" Foreground="#5f7d6c" VerticalAlignment="Center" HorizontalAlignment="Right" Padding="0,0,8,0">
+                  <FrameworkElement.Style>
+                    <Style TargetType="{x:Type TextBlock}">
+                      <Setter Property="Visibility" Value="Visible" />
+                      <Style.Triggers>
+                        <DataTrigger Value="True" Binding="{Binding ElementName=gridItemsControl, Path=IsMouseOver}">
+                          <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </FrameworkElement.Style>
+                </TextBlock>
+                  <Button Grid.Column="3" Padding="6,3" Margin="0,0,0,0" Background="#00FFFFFF" HorizontalAlignment="Right" IsTabStop="False" ToolTip="{x:Static resource:Strings.Tooltip_Close}" ToolTipService.InitialShowDelay="1500" ToolTipService.ShowDuration="2000" Click="RemoveProbe_Click">
+                    <Control.Template>
+                      <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Name="controlButton_border" BorderThickness="0" BorderBrush="#00FFFFFF" CornerRadius="1,0,0,1" Padding="{TemplateBinding Control.Padding}" Background="{TemplateBinding Control.Background}">
+                          <Image Name="controlButton_image" Source="{StaticResource icon.window-close-white}" Width="14" Height="14" Opacity="0.75" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                          <Trigger Property="UIElement.IsMouseOver" Value="True">
+                            <Setter TargetName="controlButton_border" Property="Border.Background" Value="#ff5d5d" />
+                            <Setter TargetName="controlButton_image" Property="UIElement.Opacity" Value="1" />
+                          </Trigger>
+                          <Trigger Property="ButtonBase.IsPressed" Value="True">
+                            <Setter TargetName="controlButton_border" Property="Border.Background" Value="#c94848" />
+                            <Setter TargetName="controlButton_image" Property="UIElement.Opacity" Value="0.6" />
+                          </Trigger>
+                        </ControlTemplate.Triggers>
+                      </ControlTemplate>
+                    </Control.Template>
+                    <FrameworkElement.Style>
+                      <Style TargetType="{x:Type Button}">
+                        <Setter Property="Visibility" Value="Hidden" />
+                        <Style.Triggers>
+                          <DataTrigger Value="True" Binding="{Binding ElementName=gridItemsControl, Path=IsMouseOver}">
+                            <Setter Property="Visibility" Value="Visible" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </FrameworkElement.Style>
+                  </Button>
+                  <Button Grid.Column="2" Padding="6,3" Margin="0,0,1,0" Background="#00FFFFFF" HorizontalAlignment="Right" IsTabStop="False" ToolTip="{x:Static resource:Strings.Tooltip_IsolatedView}" ToolTipService.InitialShowDelay="1500" ToolTipService.ShowDuration="2000" Click="IsolatedView_Click">
+                    <Control.Template>
+                      <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Name="controlButton_border" BorderThickness="0" BorderBrush="#00FFFFFF" CornerRadius="1" Padding="{TemplateBinding Control.Padding}" Background="{TemplateBinding Control.Background}">
+                          <Image Name="controlButton_image" Source="{StaticResource icon.window-restore-white}" Width="14" Height="14" Opacity="0.75" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                          <Trigger Property="UIElement.IsMouseOver" Value="True">
+                            <Setter TargetName="controlButton_border" Property="Border.Background" Value="#1f6b46" />
+                            <Setter TargetName="controlButton_image" Property="UIElement.Opacity" Value="1" />
+                          </Trigger>
+                          <Trigger Property="ButtonBase.IsPressed" Value="True">
+                            <Setter TargetName="controlButton_border" Property="Border.Background" Value="#154a30" />
+                            <Setter TargetName="controlButton_image" Property="UIElement.Opacity" Value="0.6" />
+                          </Trigger>
+                        </ControlTemplate.Triggers>
+                      </ControlTemplate>
+                    </Control.Template>
+                    <FrameworkElement.Style>
+                      <Style TargetType="{x:Type Button}">
+                        <Setter Property="Visibility" Value="Hidden" />
+                        <Style.Triggers>
+                          <DataTrigger Value="True" Binding="{Binding ElementName=gridItemsControl, Path=IsMouseOver}">
+                            <Setter Property="Visibility" Value="Visible" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </FrameworkElement.Style>
+                  </Button>
+                  <Button Grid.Column="1" Padding="6,3" Margin="0,0,1,0" Background="#00FFFFFF" HorizontalAlignment="Right" IsTabStop="False" ToolTip="{x:Static resource:Strings.Tooltip_EditAlias}" ToolTipService.InitialShowDelay="1500" ToolTipService.ShowDuration="2000" IsEnabled="{Binding ElementName=Hostname, Path=Text, Converter={StaticResource StringLengthToBoolConverter}}" Click="EditAlias_Click">
+                    <Control.Template>
+                      <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Name="controlButton_border" BorderThickness="0" BorderBrush="#00FFFFFF" CornerRadius="1" Padding="{TemplateBinding Control.Padding}" Background="{TemplateBinding Control.Background}">
+                          <Image Name="controlButton_image" Source="{StaticResource icon.pencil-white}" Width="14" Height="14" Opacity="0.75" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                          <Trigger Property="UIElement.IsMouseOver" Value="True">
+                            <Setter TargetName="controlButton_border" Property="Border.Background" Value="#1f6b46" />
+                            <Setter TargetName="controlButton_image" Property="UIElement.Opacity" Value="1" />
+                          </Trigger>
+                          <Trigger Property="ButtonBase.IsPressed" Value="True">
+                            <Setter TargetName="controlButton_border" Property="Border.Background" Value="#154a30" />
+                            <Setter TargetName="controlButton_image" Property="UIElement.Opacity" Value="0.6" />
+                          </Trigger>
+                          <Trigger Property="UIElement.IsEnabled" Value="False">
+                            <Setter TargetName="controlButton_image" Property="UIElement.Opacity" Value="0.3" />
+                          </Trigger>
+                        </ControlTemplate.Triggers>
+                      </ControlTemplate>
+                    </Control.Template>
+                    <FrameworkElement.Style>
+                      <Style TargetType="{x:Type Button}">
+                        <Setter Property="Visibility" Value="Hidden" />
+                        <Style.Triggers>
+                          <DataTrigger Value="True" Binding="{Binding ElementName=gridItemsControl, Path=IsMouseOver}">
+                            <Setter Property="Visibility" Value="Visible" />
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </FrameworkElement.Style>
+                  </Button>
+                </Grid>
+
+              <!-- Row 1: hostname subtitle, status badge, sparkline -->
+              <StackPanel Grid.Row="1" Margin="9,4,9,0">
+                <FrameworkElement.Style>
+                  <Style TargetType="{x:Type StackPanel}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                      <DataTrigger Value="True" Binding="{Binding HasResult}">
+                        <Setter Property="Visibility" Value="Visible" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </FrameworkElement.Style>
+                <TextBlock Text="{Binding Hostname}" FontSize="11" Foreground="#5f7d6c" Margin="0,0,0,7" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Visibility="{Binding Alias, Converter={StaticResource NullOrEmptyToVisibilityConverter}}" />
+                <StackPanel Orientation="Horizontal">
+                  <Border BorderThickness="1" Padding="7,2" HorizontalAlignment="Left" BorderBrush="{Binding Status, Converter={StaticResource ProbeStatusToBackgroundBrushConverter}}">
+                    <TextBlock FontSize="10" FontWeight="Bold" Text="{Binding Status, Converter={StaticResource ProbeStatusToTagTextConverter}}" Foreground="{Binding Status, Converter={StaticResource ProbeStatusToBackgroundBrushConverter}}" />
+                  </Border>
+                  <Border BorderThickness="1" Padding="7,2" Margin="6,0,0,0" HorizontalAlignment="Left" BorderBrush="#5f7d6c">
+                    <TextBlock FontSize="10" FontWeight="Bold" Text="{Binding Type, Converter={StaticResource ProbeTypeToLabelConverter}}" Foreground="#5f7d6c" />
+                  </Border>
+                </StackPanel>
+                <!-- service port chips: shown right under the status badges so port state is visible without scrolling -->
+                <ItemsControl ItemsSource="{Binding ServicePorts}" Focusable="False" IsTabStop="False" Margin="0,6,0,0">
+                  <FrameworkElement.Style>
+                    <Style TargetType="{x:Type ItemsControl}">
+                      <Setter Property="Visibility" Value="Collapsed" />
+                      <Style.Triggers>
+                        <MultiDataTrigger>
+                          <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding Path=Type}" Value="Service" />
+                            <Condition Binding="{Binding Path=HasResult}" Value="True" />
+                          </MultiDataTrigger.Conditions>
+                          <Setter Property="Visibility" Value="Visible" />
+                        </MultiDataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </FrameworkElement.Style>
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Border BorderThickness="1" Margin="0,0,6,6" Padding="6,2">
+                        <FrameworkElement.Style>
+                          <Style TargetType="{x:Type Border}">
+                            <Setter Property="BorderBrush" Value="#5f7d6c" />
+                            <Style.Triggers>
+                              <DataTrigger Value="OPEN" Binding="{Binding Path=StatusText}">
+                                <Setter Property="BorderBrush" Value="#33ff99" />
+                              </DataTrigger>
+                              <DataTrigger Value="CLOSED" Binding="{Binding Path=StatusText}">
+                                <Setter Property="BorderBrush" Value="#ff5d5d" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </FrameworkElement.Style>
+                        <TextBlock FontSize="10" FontWeight="SemiBold" Text="{Binding Label}">
+                          <FrameworkElement.Style>
+                            <Style TargetType="{x:Type TextBlock}">
+                              <Setter Property="Foreground" Value="#5f7d6c" />
+                              <Style.Triggers>
+                                <DataTrigger Value="OPEN" Binding="{Binding Path=StatusText}">
+                                  <Setter Property="Foreground" Value="#33ff99" />
+                                </DataTrigger>
+                                <DataTrigger Value="CLOSED" Binding="{Binding Path=StatusText}">
+                                  <Setter Property="Foreground" Value="#ff5d5d" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </FrameworkElement.Style>
+                        </TextBlock>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <c:PingSparkline Values="{Binding LatencyHistory}" Height="64" Margin="0,10,0,0">
+                  <FrameworkElement.Style>
+                    <Style TargetType="{x:Type c:PingSparkline}">
+                      <Setter Property="Visibility" Value="Visible" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=Mode}" Value="Log">
+                          <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </FrameworkElement.Style>
+                </c:PingSparkline>
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                  <FrameworkElement.Style>
+                    <Style TargetType="{x:Type StackPanel}">
+                      <Setter Property="Visibility" Value="Collapsed" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding Path=Type}" Value="Ping">
+                          <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Path=Type}" Value="Service">
+                          <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </FrameworkElement.Style>
+                  <TextBlock Text="SENT " FontSize="10" Foreground="#5f7d6c" />
+                  <TextBlock Text="{Binding Statistics.Sent}" FontSize="10" FontWeight="Bold" Foreground="#d3ecdd" />
+                  <TextBlock Text="   RECV " FontSize="10" Foreground="#5f7d6c" />
+                  <TextBlock Text="{Binding Statistics.Received}" FontSize="10" FontWeight="Bold" Foreground="#33ff99" />
+                  <TextBlock Text="   LOST " FontSize="10" Foreground="#5f7d6c" />
+                  <TextBlock Text="{Binding Statistics.Lost}" FontSize="10" FontWeight="Bold" Foreground="#ff5d5d" />
+                </StackPanel>
+              </StackPanel>
+
+              <!-- Row 3: scrolling ping/service log, fills remaining space -->
+              <c:AutoScrollListBox x:Name="History" Grid.Row="3" BorderThickness="0" Background="#00FFFFFF" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled" IsTabStop="False" IsTextSearchEnabled="False" FontFamily="Consolas" Foreground="{Binding Status, Converter={StaticResource ProbeStatusToForegroundBrushConverter}}" ItemsSource="{Binding History}" FocusVisualStyle="{x:Null}" FontSize="{Binding Type, Converter={StaticResource ProbeTypeToFontSizeConverter}}" Margin="0,8,0,0">
+                <FrameworkElement.Style>
+                  <Style TargetType="{x:Type c:AutoScrollListBox}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                      <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                          <Condition Binding="{Binding HasResult}" Value="True" />
+                          <Condition Binding="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=Mode}" Value="Log" />
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Visibility" Value="Visible" />
+                      </MultiDataTrigger>
+                      <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                          <Condition Binding="{Binding HasResult}" Value="True" />
+                          <Condition Binding="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=Mode}" Value="Both" />
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Visibility" Value="Visible" />
+                      </MultiDataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </FrameworkElement.Style>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <TextBlock Text="{Binding}" TextWrapping="Wrap" FontFamily="Consolas" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+                <ItemsControl.ItemContainerStyle>
+                  <Style TargetType="{x:Type ListBoxItem}">
+                    <Setter Property="Background" Value="#00FFFFFF" />
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Template">
+                      <Setter.Value>
+                        <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                          <ContentPresenter HorizontalAlignment="Stretch" />
+                        </ControlTemplate>
+                      </Setter.Value>
+                    </Setter>
+                    <Setter Property="IsTabStop" Value="False" />
+                    <Setter Property="FrameworkElement.FocusVisualStyle" Value="{x:Null}" />
+                  </Style>
+                </ItemsControl.ItemContainerStyle>
+                <FrameworkElement.Resources>
+                  <ResourceDictionary>
+                    <Style x:Key="{x:Type ScrollBar}" TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource ScrollBarStyle.Probe}">
+                      <Setter Property="UIElement.Opacity" Value="0.6" />
+                      <Style.Triggers>
+                        <DataTrigger Value="True" Binding="{Binding ElementName=gridItemsControl, Path=IsMouseOver}">
+                          <Setter Property="UIElement.Opacity" Value="1.0" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </ResourceDictionary>
+                </FrameworkElement.Resources>
+              </c:AutoScrollListBox>
+
+              <!-- Row 4: input row with the Start/Stop button; always visible -->
+              <Grid Grid.Row="4">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.ColumnSpan="3" Background="#151d17" BorderThickness="0,1,0,0" BorderBrush="#223028" />
+                <TextBlock Grid.Column="0" FontSize="12" FontWeight="Bold" VerticalAlignment="Center" Foreground="{Binding Status, Converter={StaticResource ProbeStatusToAliasBrushConverter}}" Padding="6,0,4,0" Text="{Binding Status, Converter={StaticResource ProbeStatusToTagTextConverter}}" />
+                <TextBox Name="Hostname" Grid.Column="1" FontWeight="SemiBold" BorderThickness="0,0,0,0" BorderBrush="#223028" VerticalContentAlignment="Center" Background="#00FFFFFF" Foreground="#ffffff" Padding="0,0,0,0" Template="{StaticResource TextBoxControlTemplate}" FontSize="12" Text="{Binding Hostname, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsActive, Converter={StaticResource InverseBooleanConverter}}" Loaded="Hostname_Loaded" TextChanged="Hostname_TextChanged" KeyDown="Hostname_KeyDown" />
+                <Button Grid.Column="2" FontSize="12" Padding="0,0" Margin="2" HorizontalAlignment="Right" Background="#10160f" Click="ProbeStartStop_Click">
+                  <Control.Template>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                      <Border Name="pingButton_border" BorderThickness="1" BorderBrush="#5f7d6c" CornerRadius="0" Background="{TemplateBinding Control.Background}">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="8,3">
+                          <Image Width="12" Height="12" Source="{Binding IsActive, Converter={StaticResource BooleanToImageConverter}}" />
+                          <TextBlock Foreground="#ffffff" FontSize="12" VerticalAlignment="Center" Margin="6,0,0,0" Text="{Binding IsActive, Converter={StaticResource BoolToStringConverter}}" Visibility="{Binding ElementName=History, Path=ActualWidth, Converter={StaticResource ButtonTextVisibilityConverter}}" />
+                        </StackPanel>
+                      </Border>
+                      <ControlTemplate.Triggers>
+                        <Trigger Property="UIElement.IsMouseOver" Value="True">
+                          <Setter TargetName="pingButton_border" Property="Border.Background" Value="#17201a" />
+                          <Setter TargetName="pingButton_border" Property="Border.BorderBrush" Value="#33ff99" />
+                        </Trigger>
+                        <Trigger Property="ButtonBase.IsPressed" Value="True">
+                          <Setter TargetName="pingButton_border" Property="Border.Background" Value="#0d130f" />
+                        </Trigger>
+                      </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                  </Control.Template>
+                </Button>
+              </Grid>
+            </Grid>
+          </Border>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <UniformGrid Columns="{Binding ElementName=ColumnCount, Path=Tag}" />
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+    </ItemsControl>
+  </DockPanel>
+</Window>
