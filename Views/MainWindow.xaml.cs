@@ -161,6 +161,29 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		SetStatusFilter(ProbeStatus.Inactive);
 	}
 
+	private void SetViewMode(PingDisplayMode mode)
+	{
+		ViewModeList.IsChecked = mode == PingDisplayMode.Log;
+		ViewModeCard.IsChecked = mode == PingDisplayMode.Graph;
+		ViewModeBoth.IsChecked = mode == PingDisplayMode.Both;
+		ApplicationOptions.ProbeDisplayMode = mode;
+	}
+
+	private void ViewModeList_Click(object sender, RoutedEventArgs e)
+	{
+		SetViewMode(PingDisplayMode.Log);
+	}
+
+	private void ViewModeCard_Click(object sender, RoutedEventArgs e)
+	{
+		SetViewMode(PingDisplayMode.Graph);
+	}
+
+	private void ViewModeBoth_Click(object sender, RoutedEventArgs e)
+	{
+		SetViewMode(PingDisplayMode.Both);
+	}
+
 	private void Probe_AliasAutoResolved(object sender, EventArgs e)
 	{
 		Dispatcher.BeginInvoke((Action)LoadAliases);
@@ -171,6 +194,9 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		Version version = Assembly.GetExecutingAssembly().GetName().Version;
 		AppTitleText.Text = $"DOMPING · V{version.Major}.{version.Minor}.{version.Build}";
 		Title = $"DoMping v{version.Major}.{version.Minor}.{version.Build}";
+		ViewModeList.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Log;
+		ViewModeCard.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Graph;
+		ViewModeBoth.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Both;
 		ColumnCount.Value = ((ApplicationOptions.InitialColumnCount > 0) ? ApplicationOptions.InitialColumnCount : 2);
 		List<string> list = CommandLine.ParseArguments();
 		if (list.Count > 0)
@@ -432,6 +458,9 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		{
 			RefreshGuiState();
 			RefreshProbeColors();
+			ViewModeList.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Log;
+			ViewModeCard.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Graph;
+			ViewModeBoth.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Both;
 		}
 	}
 

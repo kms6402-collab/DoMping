@@ -11,7 +11,7 @@
     <Setter Property="BorderBrush" Value="{StaticResource TextBox.Static.Border}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="Padding" Value="3" />
-    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontSize" Value="12" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
     <Setter Property="KeyboardNavigation.TabNavigation" Value="None" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -91,7 +91,7 @@
     <Setter Property="BorderBrush" Value="{StaticResource TextBox.Static.Border}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="Padding" Value="3" />
-    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontSize" Value="12" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
     <Setter Property="KeyboardNavigation.TabNavigation" Value="None" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />

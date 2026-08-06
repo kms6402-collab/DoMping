@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AppVersion>1.5.0</AppVersion>
+    <AppVersion>1.6.0</AppVersion>
     <AssemblyName>DoMping_v$(AppVersion)</AssemblyName>
     <OutputType>WinExe</OutputType>
     <UseWPF>True</UseWPF>

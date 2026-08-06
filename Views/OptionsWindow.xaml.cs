@@ -318,9 +318,9 @@ public partial class OptionsWindow : Window, IComponentConnector, IStyleConnecto
 				{
 					result2 = 1;
 				}
-				else if (result2 > 10)
+				else if (result2 > 16)
 				{
-					result2 = 10;
+					result2 = 16;
 				}
 			}
 			else

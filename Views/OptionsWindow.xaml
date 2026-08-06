@@ -3,7 +3,7 @@
   <FrameworkElement.Resources>
     <ResourceDictionary>
       <Style x:Key="{x:Type TextBlock}" TargetType="{x:Type TextBlock}">
-        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontSize" Value="12" />
         <Setter Property="FontWeight" Value="Regular" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="HorizontalAlignment" Value="Left" />
