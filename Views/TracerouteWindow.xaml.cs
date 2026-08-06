@@ -84,7 +84,7 @@ public partial class TracerouteWindow : Window, IComponentConnector
 	public void BackgroundThread_TraceRoute(object sender, DoWorkEventArgs e)
 	{
 		BackgroundWorker backgroundWorker = sender as BackgroundWorker;
-		byte[] bytes = Encoding.ASCII.GetBytes("https://github.com/R-Smith/DoMping");
+		byte[] bytes = Encoding.ASCII.GetBytes("https://github.com/kms6402-collab/DoMping");
 		PingOptions pingOptions = new PingOptions(1, dontFragment: true);
 		Stopwatch timer = new Stopwatch();
 		Route.Timer = timer;

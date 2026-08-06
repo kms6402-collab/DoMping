@@ -68,7 +68,7 @@ public partial class FloodHostWindow : Window, IComponentConnector
 	{
 		BackgroundWorker backgroundWorker = sender as BackgroundWorker;
 		FloodHostNode floodHostNode = e.Argument as FloodHostNode;
-		byte[] bytes = Encoding.ASCII.GetBytes("https://github.com/R-Smith/DoMping");
+		byte[] bytes = Encoding.ASCII.GetBytes("https://github.com/kms6402-collab/DoMping");
 		PingOptions options = new PingOptions(64, dontFragment: true);
 		while (!backgroundWorker.CancellationPending && floodHostNode.IsActive)
 		{

@@ -53,7 +53,7 @@
       <TextBlock Name="Version" Style="{StaticResource VersionText}" Text="Version X.XXXX.XXXX" />
       <TextBlock Name="Copyright" Style="{StaticResource VersionText}" Text="A fork of vmPing by Ryan Smith, rebranded and extended" />
       <TextBlock Style="{StaticResource VersionText}">
-        <Hyperlink NavigateUri="https://github.com/R-Smith/vmPing" Style="{StaticResource HyperlinkStyle}" RequestNavigate="Hyperlink_RequestNavigate">https://github.com/R-Smith/vmPing</Hyperlink>
+        <Hyperlink NavigateUri="https://github.com/kms6402-collab/DoMping" Style="{StaticResource HyperlinkStyle}" RequestNavigate="Hyperlink_RequestNavigate">https://github.com/kms6402-collab/DoMping</Hyperlink>
       </TextBlock>
       <Rectangle Margin="0,18,0,18" HorizontalAlignment="Stretch" Fill="#223028" Height="1" />
       <TextBlock TextAlignment="Left" LineHeight="20">DoMping monitors many hosts at once, pinging them over ICMP in parallel and showing each one as a color-coded status tile so you can spot trouble at a glance. Beyond plain ping, it can watch a single TCP port, run a multi-port TCP/UDP service check, resolve DNS, or trace the route to a host. Alerts can pop up, play a sound, or send email when a host changes state, and every host's output can optionally be logged to a file.</TextBlock>
