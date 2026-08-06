@@ -171,11 +171,11 @@
       </MenuItem>
     </Menu>
     </DockPanel>
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False">
+    <ScrollViewer Name="ProbeScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False" SizeChanged="ProbeScrollViewer_SizeChanged">
     <ItemsControl Name="ProbeItemsControl" IsTabStop="False" Focusable="False" BorderThickness="0,1,0,0" BorderBrush="#111" Margin="0,0,-2,-2">
       <ItemsControl.ItemTemplate>
         <DataTemplate>
-          <Border BorderBrush="#223028" BorderThickness="0,0,1,1" Margin="0" CornerRadius="0" Background="#10160f" MinHeight="150">
+          <Border BorderBrush="#223028" BorderThickness="0,0,1,1" Margin="0" CornerRadius="0" Background="#10160f" MinHeight="150" Height="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=TileHeight}">
             <Grid Name="gridItemsControl">
               <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -482,7 +482,7 @@
               </StackPanel>
 
               <!-- Row 3: scrolling ping/service log, fills remaining space -->
-              <c:AutoScrollListBox x:Name="History" Grid.Row="3" MaxHeight="180" BorderThickness="0" Background="#00FFFFFF" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" IsTabStop="False" IsTextSearchEnabled="False" FontFamily="Consolas" Foreground="{Binding Status, Converter={StaticResource ProbeStatusToForegroundBrushConverter}}" ItemsSource="{Binding History}" FocusVisualStyle="{x:Null}" FontSize="{Binding Type, Converter={StaticResource ProbeTypeToFontSizeConverter}}" Margin="0,8,0,0">
+              <c:AutoScrollListBox x:Name="History" Grid.Row="3" MaxHeight="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=HistoryMaxHeight}" BorderThickness="0" Background="#00FFFFFF" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" IsTabStop="False" IsTextSearchEnabled="False" FontFamily="Consolas" Foreground="{Binding Status, Converter={StaticResource ProbeStatusToForegroundBrushConverter}}" ItemsSource="{Binding History}" FocusVisualStyle="{x:Null}" FontSize="{Binding Type, Converter={StaticResource ProbeTypeToFontSizeConverter}}" Margin="0,8,0,0">
                 <FrameworkElement.Style>
                   <Style TargetType="{x:Type c:AutoScrollListBox}">
                     <Setter Property="Visibility" Value="Collapsed" />

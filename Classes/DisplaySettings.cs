@@ -17,6 +17,10 @@ public class DisplaySettings : INotifyPropertyChanged
 
 	private ProbeStatus? statusFilter;
 
+	private double tileHeight = double.NaN;
+
+	private double historyMaxHeight = 180d;
+
 	public PingDisplayMode Mode
 	{
 		get
@@ -29,6 +33,38 @@ public class DisplaySettings : INotifyPropertyChanged
 			{
 				mode = value;
 				NotifyPropertyChanged("Mode");
+			}
+		}
+	}
+
+	public double TileHeight
+	{
+		get
+		{
+			return tileHeight;
+		}
+		set
+		{
+			if (tileHeight != value)
+			{
+				tileHeight = value;
+				NotifyPropertyChanged("TileHeight");
+			}
+		}
+	}
+
+	public double HistoryMaxHeight
+	{
+		get
+		{
+			return historyMaxHeight;
+		}
+		set
+		{
+			if (historyMaxHeight != value)
+			{
+				historyMaxHeight = value;
+				NotifyPropertyChanged("HistoryMaxHeight");
 			}
 		}
 	}

@@ -24,6 +24,14 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 
 	private Dictionary<string, string> _Aliases = new Dictionary<string, string>();
 
+	private const double MinTileHeight = 150d;
+
+	private const double TileChromeHeightEstimate = 190d;
+
+	private const double MinHistoryHeight = 50d;
+
+	private const double DefaultHistoryHeight = 180d;
+
 	private NotifyIcon NotifyIcon;
 
 	public static RoutedCommand OptionsCommand = new RoutedCommand();
@@ -81,14 +89,14 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 				item.PropertyChanged += Probe_StatusChangedForFilter;
 			}
 		}
-		if (e.OldItems == null)
+		if (e.OldItems != null)
 		{
-			return;
+			foreach (Probe item2 in e.OldItems)
+			{
+				item2.PropertyChanged -= Probe_StatusChangedForFilter;
+			}
 		}
-		foreach (Probe item2 in e.OldItems)
-		{
-			item2.PropertyChanged -= Probe_StatusChangedForFilter;
-		}
+		UpdateTileLayout();
 	}
 
 	private void DisplaySettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -97,6 +105,41 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		{
 			CollectionViewSource.GetDefaultView(_ProbeCollection).Refresh();
 		}
+		if (e.PropertyName == "Mode")
+		{
+			UpdateTileLayout();
+		}
+	}
+
+	private void ProbeScrollViewer_SizeChanged(object sender, SizeChangedEventArgs e)
+	{
+		UpdateTileLayout();
+	}
+
+	private void UpdateTileLayout()
+	{
+		if (ProbeScrollViewer == null)
+		{
+			return;
+		}
+		if (DisplaySettings.Instance.Mode == PingDisplayMode.Graph)
+		{
+			DisplaySettings.Instance.TileHeight = double.NaN;
+			DisplaySettings.Instance.HistoryMaxHeight = DefaultHistoryHeight;
+			return;
+		}
+		int probeCount = _ProbeCollection.Count;
+		double viewportHeight = ProbeScrollViewer.ActualHeight;
+		if (probeCount <= 0 || viewportHeight <= 0)
+		{
+			return;
+		}
+		int columns = Math.Max(1, (int)Math.Min(ColumnCount.Value, probeCount));
+		int rows = (int)Math.Ceiling(probeCount / (double)columns);
+		double target = Math.Max(MinTileHeight, viewportHeight / rows);
+		double desiredHistory = Math.Clamp(target - TileChromeHeightEstimate, MinHistoryHeight, DefaultHistoryHeight);
+		DisplaySettings.Instance.HistoryMaxHeight = desiredHistory;
+		DisplaySettings.Instance.TileHeight = Math.Max(MinTileHeight, TileChromeHeightEstimate + desiredHistory);
 	}
 
 	private bool ProbeStatusFilter(object item)
@@ -383,6 +426,7 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 	private void ColumnCount_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
 	{
 		ColumnCount.Tag = ((ColumnCount.Value > (double)_ProbeCollection.Count) ? _ProbeCollection.Count : ((int)ColumnCount.Value));
+		UpdateTileLayout();
 	}
 
 	private void Hostname_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -794,6 +838,7 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 			ContentPresenter contentPresenter = ProbeItemsControl.ItemContainerGenerator.ContainerFromIndex(0) as ContentPresenter;
 			((System.Windows.Controls.TextBox)contentPresenter.ContentTemplate.FindName("Hostname", contentPresenter))?.Focus();
 		}
+		UpdateTileLayout();
 	}
 
 	private void Logo_TargetUpdated(object sender, DataTransferEventArgs e)
