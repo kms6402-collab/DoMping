@@ -13,6 +13,7 @@ using System.Windows.Data;
 using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Markup;
+using System.Windows.Threading;
 using DoMping.Classes;
 using DoMping.Properties;
 
@@ -96,7 +97,7 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 				item2.PropertyChanged -= Probe_StatusChangedForFilter;
 			}
 		}
-		UpdateTileLayout();
+		ScheduleTileLayoutUpdate();
 	}
 
 	private void DisplaySettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -107,13 +108,29 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		}
 		if (e.PropertyName == "Mode")
 		{
-			UpdateTileLayout();
+			ScheduleTileLayoutUpdate();
 		}
 	}
 
 	private void ProbeScrollViewer_SizeChanged(object sender, SizeChangedEventArgs e)
 	{
-		UpdateTileLayout();
+		ScheduleTileLayoutUpdate();
+	}
+
+	private bool _tileLayoutUpdatePending;
+
+	private void ScheduleTileLayoutUpdate()
+	{
+		if (_tileLayoutUpdatePending)
+		{
+			return;
+		}
+		_tileLayoutUpdatePending = true;
+		Dispatcher.BeginInvoke((Action)delegate
+		{
+			_tileLayoutUpdatePending = false;
+			UpdateTileLayout();
+		}, DispatcherPriority.Background);
 	}
 
 	private void UpdateTileLayout()
@@ -426,7 +443,7 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 	private void ColumnCount_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
 	{
 		ColumnCount.Tag = ((ColumnCount.Value > (double)_ProbeCollection.Count) ? _ProbeCollection.Count : ((int)ColumnCount.Value));
-		UpdateTileLayout();
+		ScheduleTileLayoutUpdate();
 	}
 
 	private void Hostname_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -838,7 +855,7 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 			ContentPresenter contentPresenter = ProbeItemsControl.ItemContainerGenerator.ContainerFromIndex(0) as ContentPresenter;
 			((System.Windows.Controls.TextBox)contentPresenter.ContentTemplate.FindName("Hostname", contentPresenter))?.Focus();
 		}
-		UpdateTileLayout();
+		ScheduleTileLayoutUpdate();
 	}
 
 	private void Logo_TargetUpdated(object sender, DataTransferEventArgs e)

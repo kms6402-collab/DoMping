@@ -897,7 +897,7 @@ public class Probe : INotifyPropertyChanged
 			try
 			{
 				timer.Restart();
-				PingReply pingReply = await ping.SendPingAsync(Hostname, 2000, Encoding.ASCII.GetBytes("https://github.com/R-Smith/DoMping"), new PingOptions
+				PingReply pingReply = await ping.SendPingAsync(Hostname, 2000, Encoding.ASCII.GetBytes("https://github.com/kms6402-collab/DoMping"), new PingOptions
 				{
 					Ttl = ttl
 				});
