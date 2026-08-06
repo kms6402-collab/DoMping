@@ -82,10 +82,12 @@
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
         <ContentPresenter Name="Icon" ContentSource="Icon" HorizontalAlignment="Center" Height="16" Width="16" Margin="3" SnapsToDevicePixels="{TemplateBinding UIElement.SnapsToDevicePixels}" VerticalAlignment="Center" />
         <Path Name="GlyphPanel" Fill="{TemplateBinding Control.Foreground}" FlowDirection="LeftToRight" Margin="3" Visibility="Collapsed" VerticalAlignment="Center" Data="{StaticResource Checkmark}" />
         <ContentPresenter Grid.Column="1" ContentSource="Header" Margin="{TemplateBinding Control.Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding UIElement.SnapsToDevicePixels}" TextElement.Foreground="{StaticResource MenuTopLevel.Static.Foreground}" />
+        <TextBlock Name="menuGestureText" Grid.Column="2" Margin="8,0,2,0" Opacity="0.6" FontSize="10" VerticalAlignment="Center" Foreground="{StaticResource MenuTopLevel.Static.Foreground}" Text="{TemplateBinding MenuItem.InputGestureText}" />
         <Popup Name="PART_Popup" AllowsTransparency="True" Focusable="False" Placement="Bottom" IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}" PlacementTarget="{Binding ElementName=templateRoot}">
           <Border Name="SubMenuBorder" BorderThickness="1" Padding="2" BorderBrush="{StaticResource Menu.Static.Border}" Background="{StaticResource Menu.Static.Background}">
             <ScrollViewer Name="SubMenuScrollViewer" Style="{DynamicResource {ComponentResourceKey ResourceId=MenuScrollViewer, TypeInTargetAssembly={x:Type FrameworkElement}}}">
@@ -106,6 +108,9 @@
       </Trigger>
       <Trigger Property="MenuItem.Icon" Value="{x:Null}">
         <Setter TargetName="Icon" Property="UIElement.Visibility" Value="Collapsed" />
+      </Trigger>
+      <Trigger Property="MenuItem.InputGestureText" Value="">
+        <Setter TargetName="menuGestureText" Property="UIElement.Visibility" Value="Collapsed" />
       </Trigger>
       <Trigger Property="MenuItem.IsChecked" Value="True">
         <Setter TargetName="GlyphPanel" Property="UIElement.Visibility" Value="Visible" />
@@ -131,15 +136,20 @@
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
         <ContentPresenter Name="Icon" ContentSource="Icon" HorizontalAlignment="Center" Height="16" Width="16" Margin="3" SnapsToDevicePixels="{TemplateBinding UIElement.SnapsToDevicePixels}" VerticalAlignment="Center" />
         <Path Name="GlyphPanel" Fill="{TemplateBinding Control.Foreground}" FlowDirection="LeftToRight" Margin="3" Visibility="Collapsed" VerticalAlignment="Center" Data="{StaticResource Checkmark}" />
         <ContentPresenter Grid.Column="1" ContentSource="Header" Margin="{TemplateBinding Control.Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding UIElement.SnapsToDevicePixels}" TextElement.Foreground="{StaticResource MenuTopLevel.Static.Foreground}" />
+        <TextBlock Name="menuGestureText" Grid.Column="2" Margin="8,0,2,0" Opacity="0.6" FontSize="10" VerticalAlignment="Center" Foreground="{StaticResource MenuTopLevel.Static.Foreground}" Text="{TemplateBinding MenuItem.InputGestureText}" />
       </Grid>
     </Border>
     <ControlTemplate.Triggers>
       <Trigger Property="MenuItem.Icon" Value="{x:Null}">
         <Setter TargetName="Icon" Property="UIElement.Visibility" Value="Collapsed" />
+      </Trigger>
+      <Trigger Property="MenuItem.InputGestureText" Value="">
+        <Setter TargetName="menuGestureText" Property="UIElement.Visibility" Value="Collapsed" />
       </Trigger>
       <Trigger Property="MenuItem.IsChecked" Value="True">
         <Setter TargetName="GlyphPanel" Property="UIElement.Visibility" Value="Visible" />

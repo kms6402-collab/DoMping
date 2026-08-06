@@ -42,7 +42,7 @@
           <DockPanel HorizontalAlignment="Stretch" LastChildFill="False" Background="#0a0f0c" />
         </ItemsPanelTemplate>
       </ItemsControl.ItemsPanel>
-      <MenuItem Name="AddProbeMenu" FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New">
+      <MenuItem Name="AddProbeMenu" FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New" InputGestureText="Ctrl-A">
         <HeaderedItemsControl.Header>
           <AccessText Text="{x:Static resource:Strings.Toolbar_Add}" FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New" VerticalAlignment="Center" />
         </HeaderedItemsControl.Header>
@@ -50,7 +50,7 @@
           <Image Source="{StaticResource icon.add}" VerticalAlignment="Center" Width="16" Height="16" />
         </MenuItem.Icon>
       </MenuItem>
-      <MenuItem FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New">
+      <MenuItem FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New" InputGestureText="Ctrl +/-">
         <HeaderedItemsControl.Header>
           <AccessText Text="{x:Static resource:Strings.Toolbar_Columns}" FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New" VerticalAlignment="Center" />
         </HeaderedItemsControl.Header>
@@ -70,9 +70,9 @@
           <Image Name="StartStopMenuImage" VerticalAlignment="Center" Width="16" Height="16" Source="{Binding Path=(classes:Probe.ActiveCount), Converter={StaticResource ProbeCountToGlobalStartStopIcon}}" />
         </MenuItem.Icon>
       </MenuItem>
-      <MenuItem Name="ViewModeMenu" Header="VIEW" FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New">
+      <MenuItem Name="ViewModeMenu" Header="VIEW" FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New" InputGestureText="F3">
         <MenuItem.Icon>
-          <Image Source="{StaticResource icon.card-view}" VerticalAlignment="Center" Width="16" Height="16" />
+          <Image Source="{StaticResource icon.eye}" VerticalAlignment="Center" Width="16" Height="16" />
         </MenuItem.Icon>
         <MenuItem Name="ViewModeList" Header="List (reply log only)" IsCheckable="True" Click="ViewModeList_Click">
           <MenuItem.Icon>
@@ -86,7 +86,7 @@
         </MenuItem>
         <MenuItem Name="ViewModeBoth" Header="Both (default)" IsCheckable="True" IsChecked="True" Click="ViewModeBoth_Click" />
       </MenuItem>
-      <MenuItem Name="FilterMenu" Header="FILTER" FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New">
+      <MenuItem Name="FilterMenu" Header="FILTER" FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New" InputGestureText="F4">
         <MenuItem.Icon>
           <Image Source="{StaticResource icon.filter}" VerticalAlignment="Center" Width="16" Height="16" />
         </MenuItem.Icon>
@@ -432,7 +432,7 @@
               </StackPanel>
 
               <!-- Row 3: scrolling ping/service log, fills remaining space -->
-              <c:AutoScrollListBox x:Name="History" Grid.Row="3" BorderThickness="0" Background="#00FFFFFF" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled" IsTabStop="False" IsTextSearchEnabled="False" FontFamily="Consolas" Foreground="{Binding Status, Converter={StaticResource ProbeStatusToForegroundBrushConverter}}" ItemsSource="{Binding History}" FocusVisualStyle="{x:Null}" FontSize="{Binding Type, Converter={StaticResource ProbeTypeToFontSizeConverter}}" Margin="0,8,0,0">
+              <c:AutoScrollListBox x:Name="History" Grid.Row="3" MaxHeight="180" BorderThickness="0" Background="#00FFFFFF" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" IsTabStop="False" IsTextSearchEnabled="False" FontFamily="Consolas" Foreground="{Binding Status, Converter={StaticResource ProbeStatusToForegroundBrushConverter}}" ItemsSource="{Binding History}" FocusVisualStyle="{x:Null}" FontSize="{Binding Type, Converter={StaticResource ProbeTypeToFontSizeConverter}}" Margin="0,8,0,0">
                 <FrameworkElement.Style>
                   <Style TargetType="{x:Type c:AutoScrollListBox}">
                     <Setter Property="Visibility" Value="Collapsed" />

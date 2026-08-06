@@ -320,6 +320,13 @@
       </DrawingGroup>
     </DrawingImage.Drawing>
   </DrawingImage>
+  <DrawingImage x:Key="icon.eye">
+    <DrawingImage.Drawing>
+      <DrawingGroup ClipGeometry="M0,0 L0,512 L576,512 L576,0 L0,0">
+        <GeometryDrawing Brush="#FFFFFF" Geometry="F1 M572.52,241.4 C518.29,135.59 410.93,64 288,64 S57.68,135.64 3.48,241.41 A32.35,32.35 0 0 0 3.48,270.6 C57.71,376.41 165.07,448 288,448 S518.32,376.36 572.52,270.59 A32.35,32.35 0 0 0 572.52,241.4 M288,400 A144,144 0 1 1 432,256 A144,144 0 0 1 288,400 M288,160 A95.31,95.31 0 0 0 262.69,163.79 A47.85,47.85 0 0 1 195.79,230.69 A95.78,95.78 0 1 0 288,160" />
+      </DrawingGroup>
+    </DrawingImage.Drawing>
+  </DrawingImage>
   <DrawingImage x:Key="icon.options">
     <DrawingImage.Drawing>
       <DrawingGroup ClipGeometry="M0,0 L0,512 L512,512 L512,0 L0,0">

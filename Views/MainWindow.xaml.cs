@@ -44,6 +44,14 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 
 	public static RoutedCommand StatusHistoryCommand = new RoutedCommand();
 
+	public static RoutedCommand ViewModeCycleCommand = new RoutedCommand();
+
+	public static RoutedCommand FilterCycleCommand = new RoutedCommand();
+
+	public static RoutedCommand ColumnsIncreaseCommand = new RoutedCommand();
+
+	public static RoutedCommand ColumnsDecreaseCommand = new RoutedCommand();
+
 	public MainWindow()
 	{
 		InitializeComponent();
@@ -184,6 +192,40 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		SetViewMode(PingDisplayMode.Both);
 	}
 
+	private void ViewModeCycleExecute(object sender, ExecutedRoutedEventArgs e)
+	{
+		PingDisplayMode mode = ApplicationOptions.ProbeDisplayMode switch
+		{
+			PingDisplayMode.Log => PingDisplayMode.Graph,
+			PingDisplayMode.Graph => PingDisplayMode.Both,
+			_ => PingDisplayMode.Log,
+		};
+		SetViewMode(mode);
+	}
+
+	private static readonly ProbeStatus?[] _FilterCycleOrder = new ProbeStatus?[]
+	{
+		null, ProbeStatus.Up, ProbeStatus.Down, ProbeStatus.Indeterminate,
+		ProbeStatus.Scanner, ProbeStatus.Error, ProbeStatus.Inactive,
+	};
+
+	private void FilterCycleExecute(object sender, ExecutedRoutedEventArgs e)
+	{
+		int index = Array.IndexOf(_FilterCycleOrder, DisplaySettings.Instance.StatusFilter);
+		ProbeStatus? next = _FilterCycleOrder[(index + 1) % _FilterCycleOrder.Length];
+		SetStatusFilter(next);
+	}
+
+	private void ColumnsIncreaseExecute(object sender, ExecutedRoutedEventArgs e)
+	{
+		ColumnCount.Value = Math.Min(ColumnCount.Maximum, ColumnCount.Value + 1);
+	}
+
+	private void ColumnsDecreaseExecute(object sender, ExecutedRoutedEventArgs e)
+	{
+		ColumnCount.Value = Math.Max(ColumnCount.Minimum, ColumnCount.Value - 1);
+	}
+
 	private void Probe_AliasAutoResolved(object sender, EventArgs e)
 	{
 		Dispatcher.BeginInvoke((Action)LoadAliases);
@@ -274,6 +316,10 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		base.CommandBindings.Add(new CommandBinding(AddProbeCommand, AddProbeExecute));
 		base.CommandBindings.Add(new CommandBinding(MultiInputCommand, MultiInputWindowExecute));
 		base.CommandBindings.Add(new CommandBinding(StatusHistoryCommand, StatusHistoryExecute));
+		base.CommandBindings.Add(new CommandBinding(ViewModeCycleCommand, ViewModeCycleExecute));
+		base.CommandBindings.Add(new CommandBinding(FilterCycleCommand, FilterCycleExecute));
+		base.CommandBindings.Add(new CommandBinding(ColumnsIncreaseCommand, ColumnsIncreaseExecute));
+		base.CommandBindings.Add(new CommandBinding(ColumnsDecreaseCommand, ColumnsDecreaseExecute));
 		base.InputBindings.Add(new InputBinding(OptionsCommand, new KeyGesture(Key.F10)));
 		base.InputBindings.Add(new InputBinding(StartStopCommand, new KeyGesture(Key.F5)));
 		base.InputBindings.Add(new InputBinding(HelpCommand, new KeyGesture(Key.F1)));
@@ -283,6 +329,10 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		base.InputBindings.Add(new InputBinding(AddProbeCommand, new KeyGesture(Key.A, ModifierKeys.Control)));
 		base.InputBindings.Add(new InputBinding(MultiInputCommand, new KeyGesture(Key.F2)));
 		base.InputBindings.Add(new InputBinding(StatusHistoryCommand, new KeyGesture(Key.F12)));
+		base.InputBindings.Add(new InputBinding(ViewModeCycleCommand, new KeyGesture(Key.F3)));
+		base.InputBindings.Add(new InputBinding(FilterCycleCommand, new KeyGesture(Key.F4)));
+		base.InputBindings.Add(new InputBinding(ColumnsIncreaseCommand, new KeyGesture(Key.OemPlus, ModifierKeys.Control)));
+		base.InputBindings.Add(new InputBinding(ColumnsDecreaseCommand, new KeyGesture(Key.OemMinus, ModifierKeys.Control)));
 		OptionsMenu.Command = OptionsCommand;
 		StartStopMenu.Command = StartStopCommand;
 		HelpMenu.Command = HelpCommand;
