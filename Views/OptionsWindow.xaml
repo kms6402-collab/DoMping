@@ -186,9 +186,9 @@
                   <TextBlock Text="Port" />
                 </Grid>
                 <TextBox Name="SmtpPort" HorizontalAlignment="Left" MaxLength="5" Width="75" PreviewTextInput="NumericTextbox_PreviewTextInput" />
-                <CheckBox Name="IsSmtpSslEnabled" Content="Enable SSL/TLS" FontSize="13" Margin="50,0,0,0" />
+                <CheckBox Name="IsSmtpSslEnabled" Content="Enable SSL/TLS" Margin="50,0,0,0" />
               </DockPanel>
-              <CheckBox Name="IsSmtpAuthenticationRequired" DockPanel.Dock="Top" Content="This server requires authentication" Foreground="#5f7d6c" FontSize="13" Margin="120,8,0,0" Click="IsSmtpAuthenticationRequired_Click" />
+              <CheckBox Name="IsSmtpAuthenticationRequired" DockPanel.Dock="Top" Content="This server requires authentication" Foreground="#5f7d6c" Margin="120,8,0,0" Click="IsSmtpAuthenticationRequired_Click" />
               <StackPanel DockPanel.Dock="Top" Visibility="{Binding IsChecked, ElementName=IsSmtpAuthenticationRequired, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <DockPanel>
                   <Grid Width="120">
@@ -458,7 +458,7 @@
     </TabControl>
     <Border Grid.Row="1" BorderBrush="#223028" Background="#17201a" BorderThickness="0,1,0,0">
       <DockPanel Margin="9" HorizontalAlignment="Right">
-        <CheckBox Name="SaveAsDefaults" DockPanel.Dock="Top" Content="Save as DoMping defaults" FontSize="13" Foreground="#ffffff" HorizontalAlignment="Right" />
+        <CheckBox Name="SaveAsDefaults" DockPanel.Dock="Top" Content="Save as DoMping defaults" Foreground="#ffffff" HorizontalAlignment="Right" />
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,9,0,0" HorizontalAlignment="Right">
           <Button Style="{StaticResource ButtonStandardStyle}" Margin="0,0,9,0" IsDefault="True" Width="85" Content="OK" Click="OK_Click" />
           <Button Style="{StaticResource ButtonStandardStyle}" IsCancel="True" Width="85" Content="Cancel" />

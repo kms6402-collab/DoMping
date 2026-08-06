@@ -398,7 +398,9 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		{
 			if (!string.IsNullOrWhiteSpace(_ProbeCollection[i].Hostname))
 			{
-				list.Add(_ProbeCollection[i].Hostname.Trim());
+				string existingHost = _ProbeCollection[i].Hostname.Trim();
+				string existingAlias = _ProbeCollection[i].Alias;
+				list.Add(string.IsNullOrWhiteSpace(existingAlias) ? existingHost : (existingHost + "/" + existingAlias.Trim()));
 			}
 		}
 		MultiInputWindow multiInputWindow = new MultiInputWindow(list);

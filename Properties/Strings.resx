@@ -40,7 +40,7 @@
   <data name="DialogButton_New" xml:space="preserve"><value>New</value></data>
   <data name="ManageFavorites_WindowTitle" xml:space="preserve"><value>Favorites</value></data>
   <data name="Milliseconds_Symbol" xml:space="preserve"><value>ms</value></data>
-  <data name="Toolbar_StopAll" xml:space="preserve"><value>_STOP ALL (F5)</value></data>
+  <data name="Toolbar_StopAll" xml:space="preserve"><value>_STOP ALL</value></data>
   <data name="NewFavorite_Title" xml:space="preserve"><value>Enter a title</value></data>
   <data name="EditAlias_AliasFor" xml:space="preserve"><value>Enter an alias for</value></data>
   <data name="Error_DeleteAlias" xml:space="preserve"><value>Failed to delete alias.</value></data>
@@ -109,7 +109,7 @@
   <data name="StatusHistory_NoChangesDescription" xml:space="preserve"><value>When a host changes between down or up, it'll show up here</value></data>
   <data name="NewAlias_Alias" xml:space="preserve"><value>Alias</value></data>
   <data name="Probe_UnableToResolve" xml:space="preserve"><value>Unable to resolve hostname.</value></data>
-  <data name="Toolbar_StartAll" xml:space="preserve"><value>_START ALL (F5)</value></data>
+  <data name="Toolbar_StartAll" xml:space="preserve"><value>_START ALL</value></data>
   <data name="Error_AddAlias" xml:space="preserve"><value>Failed to add alias.</value></data>
   <data name="DialogButton_Edit" xml:space="preserve"><value>Edit</value></data>
   <data name="DialogButton_Save" xml:space="preserve"><value>Save</value></data>

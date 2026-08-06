@@ -30,10 +30,13 @@ public static class AddressListParser
 			}
 			if (line.StartsWith("D/") || line.StartsWith("T/") || line.StartsWith("S/"))
 			{
+				string prefix = line.Substring(0, 2);
+				string body = line.Substring(2);
+				SplitHostAndAlias(body, out string prefixedHost, out string prefixedAlias);
 				AddUnique(result, seen, new ParsedAddress
 				{
-					Host = line,
-					Alias = null
+					Host = prefix + prefixedHost,
+					Alias = prefixedAlias
 				});
 				continue;
 			}
@@ -89,13 +92,32 @@ public static class AddressListParser
 					continue;
 				}
 			}
+			SplitHostAndAlias(line, out string plainHost, out string plainAlias);
 			AddUnique(result, seen, new ParsedAddress
 			{
-				Host = line,
-				Alias = null
+				Host = plainHost,
+				Alias = plainAlias
 			});
 		}
 		return result;
+	}
+
+	private static void SplitHostAndAlias(string text, out string host, out string alias)
+	{
+		int spaceIdx = text.IndexOfAny(new char[] { ' ', '\t' });
+		if (spaceIdx > 0)
+		{
+			string left = text.Substring(0, spaceIdx).Trim();
+			string right = text.Substring(spaceIdx + 1).Trim();
+			if (!string.IsNullOrWhiteSpace(left) && !string.IsNullOrWhiteSpace(right))
+			{
+				host = left;
+				alias = right;
+				return;
+			}
+		}
+		host = text.Trim();
+		alias = null;
 	}
 
 	private static void AddUnique(List<ParsedAddress> result, Dictionary<string, ParsedAddress> seen, ParsedAddress addr)

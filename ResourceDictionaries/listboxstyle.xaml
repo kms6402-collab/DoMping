@@ -38,7 +38,7 @@
     <Setter Property="Foreground" Value="{StaticResource ListBox.Static.Foreground}" />
     <Setter Property="BorderBrush" Value="{StaticResource ListBox.Static.Border}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontSize" Value="12" />
     <Setter Property="ListBox.SelectionMode" Value="Single" />
     <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
     <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />

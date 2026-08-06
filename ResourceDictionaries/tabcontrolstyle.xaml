@@ -54,16 +54,16 @@
   <SolidColorBrush x:Key="TabItem.Selected.Background" Color="Transparent" />
   <SolidColorBrush x:Key="TabItem.Selected.Foreground" Color="#ffffff" />
   <DataTemplate x:Key="TabHeader">
-    <TextBlock FontSize="13" FontFamily="Cascadia Mono, Consolas" Foreground="{StaticResource TabItem.Static.Foreground}" Text="{Binding}" />
+    <TextBlock FontSize="12" FontFamily="Cascadia Mono, Consolas" Foreground="{StaticResource TabItem.Static.Foreground}" Text="{Binding}" />
   </DataTemplate>
   <DataTemplate x:Key="TabSelectedHeader">
-    <TextBlock FontSize="13" FontWeight="SemiBold" FontFamily="Cascadia Mono, Consolas" Foreground="{StaticResource TabItem.Selected.Foreground}" Text="{Binding}" />
+    <TextBlock FontSize="12" FontWeight="SemiBold" FontFamily="Cascadia Mono, Consolas" Foreground="{StaticResource TabItem.Selected.Foreground}" Text="{Binding}" />
   </DataTemplate>
   <Style x:Key="{x:Type TabItem}" TargetType="{x:Type TabItem}">
     <Setter Property="FrameworkElement.FocusVisualStyle" Value="{StaticResource FocusVisual}" />
     <Setter Property="Foreground" Value="#ffffff" />
     <Setter Property="Background" Value="{StaticResource TabItem.Static.Background}" />
-    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontSize" Value="12" />
     <Setter Property="Margin" Value="0" />
     <Setter Property="MinWidth" Value="130" />
     <Setter Property="Padding" Value="12,8,15,8" />

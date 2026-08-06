@@ -28,7 +28,7 @@
     <Setter Property="Foreground" Value="{StaticResource RadioButton.Foreground}" />
     <Setter Property="BorderBrush" Value="{StaticResource RadioButton.Static.Border}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontSize" Value="12" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="HorizontalAlignment" Value="Left" />
