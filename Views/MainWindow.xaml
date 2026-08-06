@@ -334,6 +334,33 @@
                 <TextBlock Text="{Binding Hostname}" FontSize="11" Foreground="#5f7d6c" Margin="0,0,0,7" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Visibility="{Binding Alias, Converter={StaticResource NullOrEmptyToVisibilityConverter}}" />
                 <StackPanel Orientation="Horizontal">
                   <Border BorderThickness="1" Padding="7,2" HorizontalAlignment="Left" BorderBrush="{Binding Status, Converter={StaticResource ProbeStatusToBackgroundBrushConverter}}">
+                    <FrameworkElement.Style>
+                      <Style TargetType="{x:Type Border}">
+                        <Style.Triggers>
+                          <!-- subtle ~1s opacity pulse while the badge reads TIMEOUT, so it draws the eye without being jarring -->
+                          <DataTrigger Binding="{Binding Status}" Value="Down">
+                            <TriggerBase.EnterActions>
+                              <BeginStoryboard>
+                                <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                  <DoubleAnimation Storyboard.TargetProperty="(Border.Opacity)" From="1.0" To="0.5" Duration="0:0:0.5">
+                                    <DoubleAnimation.EasingFunction>
+                                      <SineEase EasingMode="EaseInOut" />
+                                    </DoubleAnimation.EasingFunction>
+                                  </DoubleAnimation>
+                                </Storyboard>
+                              </BeginStoryboard>
+                            </TriggerBase.EnterActions>
+                            <TriggerBase.ExitActions>
+                              <BeginStoryboard>
+                                <Storyboard>
+                                  <DoubleAnimation Storyboard.TargetProperty="(Border.Opacity)" From="1" To="1" Duration="0:0:0.0" FillBehavior="HoldEnd" />
+                                </Storyboard>
+                              </BeginStoryboard>
+                            </TriggerBase.ExitActions>
+                          </DataTrigger>
+                        </Style.Triggers>
+                      </Style>
+                    </FrameworkElement.Style>
                     <TextBlock FontSize="10" FontWeight="Bold" Text="{Binding Status, Converter={StaticResource ProbeStatusToTagTextConverter}}" Foreground="{Binding Status, Converter={StaticResource ProbeStatusToBackgroundBrushConverter}}" />
                   </Border>
                   <Border BorderThickness="1" Padding="7,2" Margin="6,0,0,0" HorizontalAlignment="Left">
@@ -519,7 +546,35 @@
                   <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <Border Grid.ColumnSpan="3" Background="#151d17" BorderThickness="0,1,0,0" BorderBrush="#223028" />
-                <TextBlock Grid.Column="0" FontSize="12" FontWeight="Bold" VerticalAlignment="Center" Foreground="{Binding Status, Converter={StaticResource ProbeStatusToAliasBrushConverter}}" Padding="6,0,4,0" Text="{Binding Status, Converter={StaticResource ProbeStatusToTagTextConverter}}" />
+                <TextBlock Grid.Column="0" FontSize="12" FontWeight="Bold" VerticalAlignment="Center" Foreground="{Binding Status, Converter={StaticResource ProbeStatusToAliasBrushConverter}}" Padding="6,0,4,0" Text="{Binding Status, Converter={StaticResource ProbeStatusToTagTextConverter}}">
+                  <FrameworkElement.Style>
+                    <Style TargetType="{x:Type TextBlock}">
+                      <Style.Triggers>
+                        <!-- subtle ~1s opacity pulse while the tag reads TIMEOUT, matching the Row 1 status badge blink -->
+                        <DataTrigger Binding="{Binding Status}" Value="Down">
+                          <TriggerBase.EnterActions>
+                            <BeginStoryboard>
+                              <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                <DoubleAnimation Storyboard.TargetProperty="(TextBlock.Opacity)" From="1.0" To="0.5" Duration="0:0:0.5">
+                                  <DoubleAnimation.EasingFunction>
+                                    <SineEase EasingMode="EaseInOut" />
+                                  </DoubleAnimation.EasingFunction>
+                                </DoubleAnimation>
+                              </Storyboard>
+                            </BeginStoryboard>
+                          </TriggerBase.EnterActions>
+                          <TriggerBase.ExitActions>
+                            <BeginStoryboard>
+                              <Storyboard>
+                                <DoubleAnimation Storyboard.TargetProperty="(TextBlock.Opacity)" From="1" To="1" Duration="0:0:0.0" FillBehavior="HoldEnd" />
+                              </Storyboard>
+                            </BeginStoryboard>
+                          </TriggerBase.ExitActions>
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </FrameworkElement.Style>
+                </TextBlock>
                 <TextBox Name="Hostname" Grid.Column="1" FontWeight="SemiBold" BorderThickness="0,0,0,0" BorderBrush="#223028" VerticalContentAlignment="Center" Background="#00FFFFFF" Foreground="#ffffff" Padding="0,0,0,0" Template="{StaticResource TextBoxControlTemplate}" FontSize="12" Text="{Binding Hostname, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsActive, Converter={StaticResource InverseBooleanConverter}}" Loaded="Hostname_Loaded" TextChanged="Hostname_TextChanged" KeyDown="Hostname_KeyDown" />
                 <Button Grid.Column="2" FontSize="12" Padding="0,0" Margin="2" HorizontalAlignment="Right" Background="#10160f" Click="ProbeStartStop_Click">
                   <Control.Template>
