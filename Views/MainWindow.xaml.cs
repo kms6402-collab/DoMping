@@ -432,6 +432,7 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 			return;
 		}
 		RemoveAllProbes();
+		SetStatusFilter(null);
 		List<ParsedAddress> entries = multiInputWindow.ParsedEntries;
 		if (entries.Count < 1)
 		{
@@ -580,6 +581,7 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 	private void LoadFavorite(string favoriteTitle)
 	{
 		RemoveAllProbes();
+		SetStatusFilter(null);
 		Favorite contents = Favorite.GetContents(favoriteTitle);
 		if (contents.Hostnames.Count < 1)
 		{
