@@ -203,16 +203,38 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		SetViewMode(mode);
 	}
 
-	private static readonly ProbeStatus?[] _FilterCycleOrder = new ProbeStatus?[]
-	{
-		null, ProbeStatus.Up, ProbeStatus.Down, ProbeStatus.Indeterminate,
-		ProbeStatus.Scanner, ProbeStatus.Error, ProbeStatus.Inactive,
-	};
-
 	private void FilterCycleExecute(object sender, ExecutedRoutedEventArgs e)
 	{
-		int index = Array.IndexOf(_FilterCycleOrder, DisplaySettings.Instance.StatusFilter);
-		ProbeStatus? next = _FilterCycleOrder[(index + 1) % _FilterCycleOrder.Length];
+		ProbeStatus? current = DisplaySettings.Instance.StatusFilter;
+		ProbeStatus? next;
+		if (!current.HasValue)
+		{
+			next = ProbeStatus.Up;
+		}
+		else if (current == ProbeStatus.Up)
+		{
+			next = ProbeStatus.Down;
+		}
+		else if (current == ProbeStatus.Down)
+		{
+			next = ProbeStatus.Indeterminate;
+		}
+		else if (current == ProbeStatus.Indeterminate)
+		{
+			next = ProbeStatus.Scanner;
+		}
+		else if (current == ProbeStatus.Scanner)
+		{
+			next = ProbeStatus.Error;
+		}
+		else if (current == ProbeStatus.Error)
+		{
+			next = ProbeStatus.Inactive;
+		}
+		else
+		{
+			next = null;
+		}
 		SetStatusFilter(next);
 	}
 
