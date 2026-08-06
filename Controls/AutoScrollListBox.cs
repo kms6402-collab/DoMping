@@ -38,7 +38,7 @@ public class AutoScrollListBox : ListBox
 
 	protected override void OnRender(DrawingContext drawingContext)
 	{
-		if (_adornerLayer != null && _autoScrollAdorner != null && VisualTreeHelper.GetChild(this, 0) is Decorator decorator)
+		if (_adornerLayer != null && _autoScrollAdorner != null && VisualTreeHelper.GetChildrenCount(this) > 0 && VisualTreeHelper.GetChild(this, 0) is Decorator decorator)
 		{
 			ScrollViewer scrollViewer = decorator.Child as ScrollViewer;
 			if (scrollViewer.ComputedVerticalScrollBarVisibility != Visibility.Visible)
@@ -76,7 +76,7 @@ public class AutoScrollListBox : ListBox
 	protected override void OnItemsChanged(NotifyCollectionChangedEventArgs e)
 	{
 		base.OnItemsChanged(e);
-		if (e.Action == NotifyCollectionChangedAction.Add && IsAutoScrollEnabled && VisualTreeHelper.GetChild(this, 0) is Decorator decorator)
+		if (e.Action == NotifyCollectionChangedAction.Add && IsAutoScrollEnabled && VisualTreeHelper.GetChildrenCount(this) > 0 && VisualTreeHelper.GetChild(this, 0) is Decorator decorator)
 		{
 			ScrollViewer scrollViewer = decorator.Child as ScrollViewer;
 			if (!scrollViewer.IsMouseCaptureWithin)
