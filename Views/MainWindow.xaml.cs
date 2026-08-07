@@ -152,50 +152,39 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		PingDisplayMode mode = DisplaySettings.Instance.Mode;
 		bool showsSparkline = mode != PingDisplayMode.Log;
 		bool showsHistory = mode != PingDisplayMode.Graph;
-		double naturalSparkline = showsSparkline ? DefaultSparklineHeight : 0d;
-		double naturalHistory = showsHistory ? DefaultHistoryHeight : 0d;
-		double naturalTileHeight = TileChromeHeightEstimate + naturalSparkline + naturalHistory;
 
+		// Tiles always stretch to fill the window height divided evenly across however
+		// many rows the chosen column count needs - matching the original vmPing grid
+		// behavior - rather than sitting at a small "natural" size and leaving the rest
+		// of the window blank. The growth goes into the sparkline/history log (which is
+		// what actually fills a tile's remaining space; below MinTileHeight, we simply
+		// don't have room and shrink toward the floor instead.
 		int columns = Math.Max(1, (int)Math.Min(ColumnCount.Value, probeCount));
 		int rows = (int)Math.Ceiling(probeCount / (double)columns);
-		double perRowBudget = viewportHeight / rows;
-
-		if (perRowBudget >= naturalTileHeight)
-		{
-			// Plenty of room: let the tile size to its own natural content instead of
-			// imposing an estimated height, which would either leave a gap (estimate too
-			// low) or clip content (estimate too high). NaN falls back to Auto sizing.
-			DisplaySettings.Instance.TileHeight = double.NaN;
-			DisplaySettings.Instance.SparklineHeight = DefaultSparklineHeight;
-			DisplaySettings.Instance.HistoryMaxHeight = DefaultHistoryHeight;
-			return;
-		}
-
-		// Not enough room for every row at natural size: shrink content below natural,
-		// down to MinTileHeight. In Both view, the graph gets 3x the shrinkable budget
-		// of the history log so it stays legible instead of collapsing to a sliver.
-		double target = Math.Max(MinTileHeight, perRowBudget);
+		double target = Math.Max(MinTileHeight, viewportHeight / rows);
 		double availableForContent = Math.Max(0d, target - TileChromeHeightEstimate);
 
-		double sparklineHeight = naturalSparkline;
-		double historyHeight = naturalHistory;
+		double sparklineHeight = DefaultSparklineHeight;
+		double historyHeight = DefaultHistoryHeight;
 		if (showsSparkline && showsHistory)
 		{
-			sparklineHeight = Math.Clamp(availableForContent * 0.75, MinSparklineHeight, DefaultSparklineHeight);
-			historyHeight = Math.Clamp(availableForContent - sparklineHeight, MinHistoryHeight, DefaultHistoryHeight);
+			// Both view: the graph gets 3x the budget of the history log (3:1 ratio),
+			// in both the growing and shrinking direction.
+			sparklineHeight = Math.Max(MinSparklineHeight, availableForContent * 0.75);
+			historyHeight = Math.Max(MinHistoryHeight, availableForContent - sparklineHeight);
 		}
 		else if (showsSparkline)
 		{
-			sparklineHeight = Math.Clamp(availableForContent, MinSparklineHeight, DefaultSparklineHeight);
+			sparklineHeight = Math.Max(MinSparklineHeight, availableForContent);
 		}
 		else if (showsHistory)
 		{
-			historyHeight = Math.Clamp(availableForContent, MinHistoryHeight, DefaultHistoryHeight);
+			historyHeight = Math.Max(MinHistoryHeight, availableForContent);
 		}
 
 		DisplaySettings.Instance.SparklineHeight = sparklineHeight;
-		DisplaySettings.Instance.HistoryMaxHeight = historyHeight;
-		DisplaySettings.Instance.TileHeight = Math.Max(MinTileHeight, target);
+		DisplaySettings.Instance.HistoryHeight = historyHeight;
+		DisplaySettings.Instance.TileHeight = target;
 	}
 
 	private bool ProbeStatusFilter(object item)

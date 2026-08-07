@@ -21,7 +21,7 @@ public class DisplaySettings : INotifyPropertyChanged
 
 	private double tileHeight = double.NaN;
 
-	private double historyMaxHeight = 180d;
+	private double historyHeight = 180d;
 
 	private double sparklineHeight = 64d;
 
@@ -57,18 +57,18 @@ public class DisplaySettings : INotifyPropertyChanged
 		}
 	}
 
-	public double HistoryMaxHeight
+	public double HistoryHeight
 	{
 		get
 		{
-			return historyMaxHeight;
+			return historyHeight;
 		}
 		set
 		{
-			if (historyMaxHeight != value)
+			if (historyHeight != value)
 			{
-				historyMaxHeight = value;
-				NotifyPropertyChanged("HistoryMaxHeight");
+				historyHeight = value;
+				NotifyPropertyChanged("HistoryHeight");
 			}
 		}
 	}
