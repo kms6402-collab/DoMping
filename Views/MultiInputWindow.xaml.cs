@@ -50,7 +50,7 @@ public partial class MultiInputWindow : Window, IComponentConnector
 		List<ParsedAddress> parsed = AddressListParser.Parse(rawLines, out List<string> warnings);
 		if (warnings.Count > 0)
 		{
-			string message = "The following entries could not be expanded and were skipped:\n\n" + string.Join("\n", warnings.Take(10));
+			string message = "The following entries were skipped or merged:\n\n" + string.Join("\n", warnings.Take(10));
 			if (warnings.Count > 10)
 			{
 				message += $"\n… and {warnings.Count - 10} more.";

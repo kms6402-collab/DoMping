@@ -98,6 +98,11 @@
         <MenuItem Name="FilterScanning" Header="Scanning" IsCheckable="True" Click="FilterScanning_Click" />
         <MenuItem Name="FilterError" Header="Error" IsCheckable="True" Click="FilterError_Click" />
         <MenuItem Name="FilterIdle" Header="Idle" IsCheckable="True" Click="FilterIdle_Click" />
+        <Separator />
+        <StackPanel Orientation="Vertical" Margin="8,4">
+          <TextBlock Text="Custom text filter (hostname/alias)" FontSize="10" Foreground="#5f7d6c" Margin="0,0,0,4" />
+          <TextBox Name="FilterCustomText" Width="220" FontSize="12" Text="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=CustomFilterText, UpdateSourceTrigger=PropertyChanged}" />
+        </StackPanel>
       </MenuItem>
       <MenuItem Width="40" DockPanel.Dock="Right" Template="{StaticResource TopLevelHeaderNoPaddingTemplate}">
         <MenuItem.Icon>
@@ -182,9 +187,10 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
               </Grid.RowDefinitions>
-              <Image Grid.Row="0" Grid.RowSpan="5" Source="{StaticResource icon.domping-logo-simple}" Width="72" Height="72" IsHitTestVisible="False" Opacity="0.05" Visibility="{Binding IsActive, Converter={StaticResource InverseBooleanToVisibilityConverter}, NotifyOnTargetUpdated=True}" TargetUpdated="Logo_TargetUpdated" />
+              <Image Grid.Row="0" Grid.RowSpan="6" Source="{StaticResource icon.domping-logo-simple}" Width="72" Height="72" IsHitTestVisible="False" Opacity="0.05" Visibility="{Binding IsActive, Converter={StaticResource InverseBooleanToVisibilityConverter}, NotifyOnTargetUpdated=True}" TargetUpdated="Logo_TargetUpdated" />
               <Grid Grid.Row="0" AllowDrop="True" Drop="Probe_Drop">
                 <FrameworkElement.Style>
                   <Style TargetType="{x:Type Grid}">
@@ -539,7 +545,7 @@
               </c:AutoScrollListBox>
 
               <!-- Row 4: input row with the Start/Stop button; always visible -->
-              <Grid Grid.Row="4">
+              <Grid Grid.Row="5">
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="Auto" />
                   <ColumnDefinition Width="*" />

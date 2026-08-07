@@ -37,7 +37,7 @@ public static class AddressListParser
 				{
 					Host = prefix + prefixedHost,
 					Alias = prefixedAlias
-				});
+				}, warnings);
 				continue;
 			}
 			if (TryParseRange(line, out List<string> rangeIps, out string rangeError))
@@ -53,7 +53,7 @@ public static class AddressListParser
 					{
 						Host = ip,
 						Alias = null
-					});
+					}, warnings);
 				}
 				continue;
 			}
@@ -77,7 +77,7 @@ public static class AddressListParser
 							{
 								Host = ip2,
 								Alias = null
-							});
+							}, warnings);
 						}
 						continue;
 					}
@@ -88,7 +88,7 @@ public static class AddressListParser
 					{
 						Host = left,
 						Alias = right
-					});
+					}, warnings);
 					continue;
 				}
 			}
@@ -97,7 +97,7 @@ public static class AddressListParser
 			{
 				Host = plainHost,
 				Alias = plainAlias
-			});
+			}, warnings);
 		}
 		return result;
 	}
@@ -120,13 +120,18 @@ public static class AddressListParser
 		alias = null;
 	}
 
-	private static void AddUnique(List<ParsedAddress> result, Dictionary<string, ParsedAddress> seen, ParsedAddress addr)
+	private static void AddUnique(List<ParsedAddress> result, Dictionary<string, ParsedAddress> seen, ParsedAddress addr, List<string> warnings)
 	{
 		if (seen.TryGetValue(addr.Host, out ParsedAddress existing))
 		{
 			if (string.IsNullOrEmpty(existing.Alias) && !string.IsNullOrEmpty(addr.Alias))
 			{
 				existing.Alias = addr.Alias;
+				warnings.Add($"Duplicate host merged (alias applied to the existing entry): {addr.Host}");
+			}
+			else
+			{
+				warnings.Add($"Duplicate host skipped (already in the list): {addr.Host}");
 			}
 			return;
 		}

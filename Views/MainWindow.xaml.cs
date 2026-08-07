@@ -106,7 +106,7 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 
 	private void DisplaySettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
 	{
-		if (e.PropertyName == "StatusFilter")
+		if (e.PropertyName == "StatusFilter" || e.PropertyName == "CustomFilterText")
 		{
 			CollectionViewSource.GetDefaultView(_ProbeCollection).Refresh();
 		}
@@ -160,25 +160,37 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		int rows = (int)Math.Ceiling(probeCount / (double)columns);
 		double perRowBudget = viewportHeight / rows;
 
-		// Never grow tiles beyond their natural size (that just leaves empty space in
-		// each tile); only shrink below natural when there isn't room for every row.
-		double target = Math.Min(naturalTileHeight, Math.Max(MinTileHeight, perRowBudget));
+		if (perRowBudget >= naturalTileHeight)
+		{
+			// Plenty of room: let the tile size to its own natural content instead of
+			// imposing an estimated height, which would either leave a gap (estimate too
+			// low) or clip content (estimate too high). NaN falls back to Auto sizing.
+			DisplaySettings.Instance.TileHeight = double.NaN;
+			DisplaySettings.Instance.SparklineHeight = DefaultSparklineHeight;
+			DisplaySettings.Instance.HistoryMaxHeight = DefaultHistoryHeight;
+			return;
+		}
+
+		// Not enough room for every row at natural size: shrink content below natural,
+		// down to MinTileHeight. In Both view, the graph gets 3x the shrinkable budget
+		// of the history log so it stays legible instead of collapsing to a sliver.
+		double target = Math.Max(MinTileHeight, perRowBudget);
 		double availableForContent = Math.Max(0d, target - TileChromeHeightEstimate);
 
 		double sparklineHeight = naturalSparkline;
 		double historyHeight = naturalHistory;
-		double contentDeficit = naturalSparkline + naturalHistory - availableForContent;
-		if (contentDeficit > 0d)
+		if (showsSparkline && showsHistory)
 		{
-			if (showsSparkline)
-			{
-				sparklineHeight = Math.Max(MinSparklineHeight, DefaultSparklineHeight - contentDeficit);
-				contentDeficit -= DefaultSparklineHeight - sparklineHeight;
-			}
-			if (showsHistory)
-			{
-				historyHeight = Math.Max(MinHistoryHeight, DefaultHistoryHeight - contentDeficit);
-			}
+			sparklineHeight = Math.Clamp(availableForContent * 0.75, MinSparklineHeight, DefaultSparklineHeight);
+			historyHeight = Math.Clamp(availableForContent - sparklineHeight, MinHistoryHeight, DefaultHistoryHeight);
+		}
+		else if (showsSparkline)
+		{
+			sparklineHeight = Math.Clamp(availableForContent, MinSparklineHeight, DefaultSparklineHeight);
+		}
+		else if (showsHistory)
+		{
+			historyHeight = Math.Clamp(availableForContent, MinHistoryHeight, DefaultHistoryHeight);
 		}
 
 		DisplaySettings.Instance.SparklineHeight = sparklineHeight;
@@ -188,22 +200,36 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 
 	private bool ProbeStatusFilter(object item)
 	{
-		ProbeStatus? statusFilter = DisplaySettings.Instance.StatusFilter;
-		if (!statusFilter.HasValue)
-		{
-			return true;
-		}
 		Probe probe = (Probe)item;
-		if (probe.Status == statusFilter.Value)
+		ProbeStatus? statusFilter = DisplaySettings.Instance.StatusFilter;
+		if (statusFilter.HasValue)
 		{
-			return true;
+			bool statusMatches = probe.Status == statusFilter.Value || (statusFilter.Value == ProbeStatus.Indeterminate && probe.Status == ProbeStatus.LatencyHigh);
+			if (!statusMatches)
+			{
+				return false;
+			}
 		}
-		return statusFilter.Value == ProbeStatus.Indeterminate && probe.Status == ProbeStatus.LatencyHigh;
+		string customText = DisplaySettings.Instance.CustomFilterText;
+		if (!string.IsNullOrWhiteSpace(customText))
+		{
+			bool hostnameMatches = !string.IsNullOrEmpty(probe.Hostname) && probe.Hostname.Contains(customText, StringComparison.OrdinalIgnoreCase);
+			bool aliasMatches = !string.IsNullOrEmpty(probe.Alias) && probe.Alias.Contains(customText, StringComparison.OrdinalIgnoreCase);
+			if (!hostnameMatches && !aliasMatches)
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private void Probe_StatusChangedForFilter(object sender, PropertyChangedEventArgs e)
 	{
 		if (e.PropertyName == "Status" && DisplaySettings.Instance.StatusFilter.HasValue)
+		{
+			CollectionViewSource.GetDefaultView(_ProbeCollection).Refresh();
+		}
+		if ((e.PropertyName == "Hostname" || e.PropertyName == "Alias") && !string.IsNullOrWhiteSpace(DisplaySettings.Instance.CustomFilterText))
 		{
 			CollectionViewSource.GetDefaultView(_ProbeCollection).Refresh();
 		}

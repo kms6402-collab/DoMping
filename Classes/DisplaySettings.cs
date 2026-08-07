@@ -17,6 +17,8 @@ public class DisplaySettings : INotifyPropertyChanged
 
 	private ProbeStatus? statusFilter;
 
+	private string customFilterText = string.Empty;
+
 	private double tileHeight = double.NaN;
 
 	private double historyMaxHeight = 180d;
@@ -99,6 +101,22 @@ public class DisplaySettings : INotifyPropertyChanged
 			{
 				statusFilter = value;
 				NotifyPropertyChanged("StatusFilter");
+			}
+		}
+	}
+
+	public string CustomFilterText
+	{
+		get
+		{
+			return customFilterText;
+		}
+		set
+		{
+			if (customFilterText != value)
+			{
+				customFilterText = value ?? string.Empty;
+				NotifyPropertyChanged("CustomFilterText");
 			}
 		}
 	}
