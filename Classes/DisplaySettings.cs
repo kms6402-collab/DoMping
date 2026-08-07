@@ -21,6 +21,8 @@ public class DisplaySettings : INotifyPropertyChanged
 
 	private double historyMaxHeight = 180d;
 
+	private double sparklineHeight = 64d;
+
 	public PingDisplayMode Mode
 	{
 		get
@@ -65,6 +67,22 @@ public class DisplaySettings : INotifyPropertyChanged
 			{
 				historyMaxHeight = value;
 				NotifyPropertyChanged("HistoryMaxHeight");
+			}
+		}
+	}
+
+	public double SparklineHeight
+	{
+		get
+		{
+			return sparklineHeight;
+		}
+		set
+		{
+			if (sparklineHeight != value)
+			{
+				sparklineHeight = value;
+				NotifyPropertyChanged("SparklineHeight");
 			}
 		}
 	}

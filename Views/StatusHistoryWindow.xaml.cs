@@ -124,7 +124,7 @@ public partial class StatusHistoryWindow : Window, IComponentConnector
 				}
 			}
 		}
-		if (VisualTreeHelper.GetChild(StatusHistory, 0) is Decorator decorator)
+		if (VisualTreeHelper.GetChildrenCount(StatusHistory) > 0 && VisualTreeHelper.GetChild(StatusHistory, 0) is Decorator decorator)
 		{
 			(decorator.Child as ScrollViewer)?.ScrollToEnd();
 		}

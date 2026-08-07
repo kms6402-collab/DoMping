@@ -62,7 +62,7 @@ public partial class PopupNotificationWindow : Window, IComponentConnector
 
 	private void ScrollToEnd()
 	{
-		if (StatusHistoryList.Items.Count > 0 && VisualTreeHelper.GetChild(StatusHistoryList, 0) is Decorator { Child: ScrollViewer child })
+		if (StatusHistoryList.Items.Count > 0 && VisualTreeHelper.GetChildrenCount(StatusHistoryList) > 0 && VisualTreeHelper.GetChild(StatusHistoryList, 0) is Decorator { Child: ScrollViewer child })
 		{
 			child.ScrollToEnd();
 		}

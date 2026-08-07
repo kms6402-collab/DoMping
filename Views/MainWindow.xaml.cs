@@ -25,13 +25,17 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 
 	private Dictionary<string, string> _Aliases = new Dictionary<string, string>();
 
-	private const double MinTileHeight = 150d;
+	private const double MinTileHeight = 90d;
 
-	private const double TileChromeHeightEstimate = 190d;
+	private const double TileChromeHeightEstimate = 110d;
 
-	private const double MinHistoryHeight = 50d;
+	private const double MinHistoryHeight = 36d;
 
 	private const double DefaultHistoryHeight = 180d;
+
+	private const double MinSparklineHeight = 24d;
+
+	private const double DefaultSparklineHeight = 64d;
 
 	private NotifyIcon NotifyIcon;
 
@@ -139,24 +143,47 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		{
 			return;
 		}
-		if (DisplaySettings.Instance.Mode == PingDisplayMode.Graph)
-		{
-			DisplaySettings.Instance.TileHeight = double.NaN;
-			DisplaySettings.Instance.HistoryMaxHeight = DefaultHistoryHeight;
-			return;
-		}
 		int probeCount = _ProbeCollection.Count;
 		double viewportHeight = ProbeScrollViewer.ActualHeight;
 		if (probeCount <= 0 || viewportHeight <= 0)
 		{
 			return;
 		}
+		PingDisplayMode mode = DisplaySettings.Instance.Mode;
+		bool showsSparkline = mode != PingDisplayMode.Log;
+		bool showsHistory = mode != PingDisplayMode.Graph;
+		double naturalSparkline = showsSparkline ? DefaultSparklineHeight : 0d;
+		double naturalHistory = showsHistory ? DefaultHistoryHeight : 0d;
+		double naturalTileHeight = TileChromeHeightEstimate + naturalSparkline + naturalHistory;
+
 		int columns = Math.Max(1, (int)Math.Min(ColumnCount.Value, probeCount));
 		int rows = (int)Math.Ceiling(probeCount / (double)columns);
-		double target = Math.Max(MinTileHeight, viewportHeight / rows);
-		double desiredHistory = Math.Clamp(target - TileChromeHeightEstimate, MinHistoryHeight, DefaultHistoryHeight);
-		DisplaySettings.Instance.HistoryMaxHeight = desiredHistory;
-		DisplaySettings.Instance.TileHeight = Math.Max(MinTileHeight, TileChromeHeightEstimate + desiredHistory);
+		double perRowBudget = viewportHeight / rows;
+
+		// Never grow tiles beyond their natural size (that just leaves empty space in
+		// each tile); only shrink below natural when there isn't room for every row.
+		double target = Math.Min(naturalTileHeight, Math.Max(MinTileHeight, perRowBudget));
+		double availableForContent = Math.Max(0d, target - TileChromeHeightEstimate);
+
+		double sparklineHeight = naturalSparkline;
+		double historyHeight = naturalHistory;
+		double contentDeficit = naturalSparkline + naturalHistory - availableForContent;
+		if (contentDeficit > 0d)
+		{
+			if (showsSparkline)
+			{
+				sparklineHeight = Math.Max(MinSparklineHeight, DefaultSparklineHeight - contentDeficit);
+				contentDeficit -= DefaultSparklineHeight - sparklineHeight;
+			}
+			if (showsHistory)
+			{
+				historyHeight = Math.Max(MinHistoryHeight, DefaultHistoryHeight - contentDeficit);
+			}
+		}
+
+		DisplaySettings.Instance.SparklineHeight = sparklineHeight;
+		DisplaySettings.Instance.HistoryMaxHeight = historyHeight;
+		DisplaySettings.Instance.TileHeight = Math.Max(MinTileHeight, target);
 	}
 
 	private bool ProbeStatusFilter(object item)
@@ -492,37 +519,49 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		{
 			return;
 		}
-		RemoveAllProbes();
-		SetStatusFilter(null);
 		List<ParsedAddress> entries = multiInputWindow.ParsedEntries;
-		if (entries.Count < 1)
+		try
 		{
-			AddProbe();
-		}
-		else
-		{
-			AddProbe(entries.Count);
-			for (int j = 0; j < entries.Count; j++)
+			RemoveAllProbes();
+			SetStatusFilter(null);
+			if (entries.Count < 1)
 			{
-				string host = entries[j].Host;
-				_ProbeCollection[j].Hostname = host;
-				if (!string.IsNullOrWhiteSpace(entries[j].Alias))
-				{
-					string alias = entries[j].Alias.Trim();
-					_ProbeCollection[j].Alias = alias;
-					_Aliases[host.ToLower()] = alias;
-					Alias.AddAlias(host, alias);
-				}
-				else
-				{
-					_ProbeCollection[j].Alias = (_Aliases.ContainsKey(host.ToLower()) ? _Aliases[host.ToLower()] : null);
-				}
-				_ProbeCollection[j].StartStop();
+				AddProbe();
 			}
+			else
+			{
+				AddProbe(entries.Count);
+				for (int j = 0; j < entries.Count; j++)
+				{
+					string host = entries[j].Host;
+					_ProbeCollection[j].Hostname = host;
+					if (!string.IsNullOrWhiteSpace(entries[j].Alias))
+					{
+						string alias = entries[j].Alias.Trim();
+						_ProbeCollection[j].Alias = alias;
+						_Aliases[host.ToLower()] = alias;
+						Alias.AddAlias(host, alias);
+					}
+					else
+					{
+						_ProbeCollection[j].Alias = (_Aliases.ContainsKey(host.ToLower()) ? _Aliases[host.ToLower()] : null);
+					}
+				}
+				for (int j = 0; j < entries.Count; j++)
+				{
+					_ProbeCollection[j].StartStop();
+				}
+			}
+			double value = ColumnCount.Value;
+			ColumnCount.Value = 1.0;
+			ColumnCount.Value = value;
 		}
-		double value = ColumnCount.Value;
-		ColumnCount.Value = 1.0;
-		ColumnCount.Value = value;
+		catch (Exception ex)
+		{
+			DialogWindow dialogWindow2 = DialogWindow.ErrorWindow("Failed to apply the updated address list; some hosts may be missing. " + ex.Message);
+			dialogWindow2.Owner = this;
+			dialogWindow2.ShowDialog();
+		}
 	}
 
 	private void StartStopExecute(object sender, ExecutedRoutedEventArgs e)
@@ -641,26 +680,38 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 
 	private void LoadFavorite(string favoriteTitle)
 	{
-		RemoveAllProbes();
-		SetStatusFilter(null);
-		Favorite contents = Favorite.GetContents(favoriteTitle);
-		if (contents.Hostnames.Count < 1)
+		try
 		{
-			AddProbe();
-		}
-		else
-		{
-			AddProbe(contents.Hostnames.Count);
-			for (int i = 0; i < contents.Hostnames.Count; i++)
+			RemoveAllProbes();
+			SetStatusFilter(null);
+			Favorite contents = Favorite.GetContents(favoriteTitle);
+			if (contents.Hostnames.Count < 1)
 			{
-				_ProbeCollection[i].Hostname = contents.Hostnames[i];
-				_ProbeCollection[i].Alias = (_Aliases.ContainsKey(_ProbeCollection[i].Hostname.ToLower()) ? _Aliases[_ProbeCollection[i].Hostname.ToLower()] : null);
-				_ProbeCollection[i].StartStop();
+				AddProbe();
 			}
+			else
+			{
+				AddProbe(contents.Hostnames.Count);
+				for (int i = 0; i < contents.Hostnames.Count; i++)
+				{
+					_ProbeCollection[i].Hostname = contents.Hostnames[i];
+					_ProbeCollection[i].Alias = (_Aliases.ContainsKey(_ProbeCollection[i].Hostname.ToLower()) ? _Aliases[_ProbeCollection[i].Hostname.ToLower()] : null);
+				}
+				for (int i = 0; i < contents.Hostnames.Count; i++)
+				{
+					_ProbeCollection[i].StartStop();
+				}
+			}
+			ColumnCount.Value = 1.0;
+			ColumnCount.Value = contents.ColumnCount;
+			base.Title = favoriteTitle + " - DoMping";
 		}
-		ColumnCount.Value = 1.0;
-		ColumnCount.Value = contents.ColumnCount;
-		base.Title = favoriteTitle + " - DoMping";
+		catch (Exception ex)
+		{
+			DialogWindow dialogWindow = DialogWindow.ErrorWindow("Failed to load favorite '" + favoriteTitle + "'; some hosts may be missing. " + ex.Message);
+			dialogWindow.Owner = this;
+			dialogWindow.ShowDialog();
+		}
 	}
 
 	private void LoadAliases()

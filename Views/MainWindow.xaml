@@ -175,13 +175,13 @@
     <ItemsControl Name="ProbeItemsControl" IsTabStop="False" Focusable="False" BorderThickness="0,1,0,0" BorderBrush="#111" Margin="0,0,-2,-2">
       <ItemsControl.ItemTemplate>
         <DataTemplate>
-          <Border BorderBrush="#223028" BorderThickness="0,0,1,1" Margin="0" CornerRadius="0" Background="#10160f" MinHeight="150" Height="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=TileHeight}">
+          <Border BorderBrush="#223028" BorderThickness="0,0,1,1" Margin="0" CornerRadius="0" Background="#10160f" VerticalAlignment="Top" MinHeight="90" Height="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=TileHeight}">
             <Grid Name="gridItemsControl">
               <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
               </Grid.RowDefinitions>
               <Image Grid.Row="0" Grid.RowSpan="5" Source="{StaticResource icon.domping-logo-simple}" Width="72" Height="72" IsHitTestVisible="False" Opacity="0.05" Visibility="{Binding IsActive, Converter={StaticResource InverseBooleanToVisibilityConverter}, NotifyOnTargetUpdated=True}" TargetUpdated="Logo_TargetUpdated" />
@@ -331,7 +331,7 @@
                     </Style.Triggers>
                   </Style>
                 </FrameworkElement.Style>
-                <TextBlock Text="{Binding Hostname}" FontSize="11" Foreground="#5f7d6c" Margin="0,0,0,7" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Visibility="{Binding Alias, Converter={StaticResource NullOrEmptyToVisibilityConverter}}" />
+                <TextBlock Text="{Binding Hostname}" FontSize="11" Foreground="#5f7d6c" Margin="0,0,0,4" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Visibility="{Binding Alias, Converter={StaticResource NullOrEmptyToVisibilityConverter}}" />
                 <StackPanel Orientation="Horizontal">
                   <Border BorderThickness="1" Padding="7,2" HorizontalAlignment="Left" BorderBrush="{Binding Status, Converter={StaticResource ProbeStatusToBackgroundBrushConverter}}">
                     <FrameworkElement.Style>
@@ -446,7 +446,7 @@
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <c:PingSparkline Values="{Binding LatencyHistory}" Height="64" Margin="0,10,0,0">
+                <c:PingSparkline Values="{Binding LatencyHistory}" Height="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=SparklineHeight}" Margin="0,6,0,0">
                   <FrameworkElement.Style>
                     <Style TargetType="{x:Type c:PingSparkline}">
                       <Setter Property="Visibility" Value="Visible" />
@@ -458,7 +458,7 @@
                     </Style>
                   </FrameworkElement.Style>
                 </c:PingSparkline>
-                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                   <FrameworkElement.Style>
                     <Style TargetType="{x:Type StackPanel}">
                       <Setter Property="Visibility" Value="Collapsed" />
@@ -482,7 +482,7 @@
               </StackPanel>
 
               <!-- Row 3: scrolling ping/service log, fills remaining space -->
-              <c:AutoScrollListBox x:Name="History" Grid.Row="3" MaxHeight="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=HistoryMaxHeight}" BorderThickness="0" Background="#00FFFFFF" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" IsTabStop="False" IsTextSearchEnabled="False" FontFamily="Consolas" Foreground="{Binding Status, Converter={StaticResource ProbeStatusToForegroundBrushConverter}}" ItemsSource="{Binding History}" FocusVisualStyle="{x:Null}" FontSize="{Binding Type, Converter={StaticResource ProbeTypeToFontSizeConverter}}" Margin="0,8,0,0">
+              <c:AutoScrollListBox x:Name="History" Grid.Row="3" MaxHeight="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=HistoryMaxHeight}" BorderThickness="0" Background="#00FFFFFF" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" IsTabStop="False" IsTextSearchEnabled="False" FontFamily="Consolas" Foreground="{Binding Status, Converter={StaticResource ProbeStatusToForegroundBrushConverter}}" ItemsSource="{Binding History}" FocusVisualStyle="{x:Null}" FontSize="{Binding Type, Converter={StaticResource ProbeTypeToFontSizeConverter}}" Margin="0,4,0,0">
                 <FrameworkElement.Style>
                   <Style TargetType="{x:Type c:AutoScrollListBox}">
                     <Setter Property="Visibility" Value="Collapsed" />
