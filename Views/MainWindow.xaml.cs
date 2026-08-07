@@ -143,10 +143,17 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		{
 			return;
 		}
-		int probeCount = _ProbeCollection.Count;
+		// Count only the items UniformGrid is actually rendering (respects an active
+		// status/text filter), not the raw collection - otherwise a filter can leave
+		// the row/column math (and therefore TileHeight) computed for a different
+		// item count than what's really on screen.
+		int probeCount = CollectionViewSource.GetDefaultView(_ProbeCollection).Cast<object>().Count();
 		double viewportHeight = ProbeScrollViewer.ActualHeight;
 		if (probeCount <= 0 || viewportHeight <= 0)
 		{
+			// Not laid out yet (e.g. mid-transition right after a view/filter change).
+			// Retry shortly instead of silently leaving a stale TileHeight in place.
+			ScheduleTileLayoutUpdate();
 			return;
 		}
 		PingDisplayMode mode = DisplaySettings.Instance.Mode;
@@ -159,7 +166,9 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		// of the window blank. The growth goes into the sparkline/history log (which is
 		// what actually fills a tile's remaining space; below MinTileHeight, we simply
 		// don't have room and shrink toward the floor instead.
-		int columns = Math.Max(1, (int)Math.Min(ColumnCount.Value, probeCount));
+		// Columns is derived exactly like ColumnCount_ValueChanged computes ColumnCount.Tag
+		// (the value UniformGrid.Columns is actually bound to), so the two can never diverge.
+		int columns = Math.Max(1, Math.Min((int)ColumnCount.Value, probeCount));
 		int rows = (int)Math.Ceiling(probeCount / (double)columns);
 		double target = Math.Max(MinTileHeight, viewportHeight / rows);
 		double availableForContent = Math.Max(0d, target - TileChromeHeightEstimate);
@@ -391,7 +400,7 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 				break;
 			}
 		}
-		ColumnCount.Tag = ((ColumnCount.Value > (double)_ProbeCollection.Count) ? _ProbeCollection.Count : ((int)ColumnCount.Value));
+		RefreshColumnCountTag();
 	}
 
 	private void RefreshGuiState()
@@ -484,8 +493,14 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 
 	private void ColumnCount_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
 	{
-		ColumnCount.Tag = ((ColumnCount.Value > (double)_ProbeCollection.Count) ? _ProbeCollection.Count : ((int)ColumnCount.Value));
+		RefreshColumnCountTag();
 		ScheduleTileLayoutUpdate();
+	}
+
+	private void RefreshColumnCountTag()
+	{
+		int visibleCount = CollectionViewSource.GetDefaultView(_ProbeCollection).Cast<object>().Count();
+		ColumnCount.Tag = ((ColumnCount.Value > (double)visibleCount) ? visibleCount : ((int)ColumnCount.Value));
 	}
 
 	private void Hostname_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -512,7 +527,7 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 				probe.StartStop();
 			}
 			_ProbeCollection.Remove(probe);
-			ColumnCount.Tag = ((ColumnCount.Value > (double)_ProbeCollection.Count) ? _ProbeCollection.Count : ((int)ColumnCount.Value));
+			RefreshColumnCountTag();
 		}
 	}
 
@@ -636,7 +651,7 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 	private void AddProbeExecute(object sender, ExecutedRoutedEventArgs e)
 	{
 		_ProbeCollection.Add(new Probe());
-		ColumnCount.Tag = ((ColumnCount.Value > (double)_ProbeCollection.Count) ? _ProbeCollection.Count : ((int)ColumnCount.Value));
+		RefreshColumnCountTag();
 	}
 
 	private void OptionsExecute(object sender, ExecutedRoutedEventArgs e)
