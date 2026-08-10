@@ -42,12 +42,16 @@ jobs:
         run: |
           brew install imagemagick >/dev/null
           mkdir -p icon.iconset
-          magick app.ico -resize 512x512 icon-512.png
+          # app.ico bundles several embedded resolutions as frames. Resize directly from
+          # frame 0 of the .ico for every target size instead of staging through one
+          # intermediate PNG - ImageMagick can silently fan a multi-frame source out into
+          # several numbered files instead of the single name you asked for, which is what
+          # broke this step the first time (icon-512.png never actually got created).
           for size in 16 32 64 128 256 512; do
-            magick icon-512.png -resize ${size}x${size} icon.iconset/icon_${size}x${size}.png
+            magick "app.ico[0]" -resize ${size}x${size} icon.iconset/icon_${size}x${size}.png
             double=$((size*2))
             if [ $double -le 1024 ]; then
-              magick icon-512.png -resize ${double}x${double} icon.iconset/icon_${size}x${size}@2x.png
+              magick "app.ico[0]" -resize ${double}x${double} icon.iconset/icon_${size}x${size}@2x.png
             fi
           done
           iconutil -c icns icon.iconset -o DoMping.icns
