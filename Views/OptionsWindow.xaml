@@ -318,6 +318,7 @@
           <RadioButton Name="PingDisplayLogOption" DockPanel.Dock="Top" GroupName="PingDisplayMode" Content="Reply log only (the classic scrolling text output)" Margin="0,10,0,0" />
           <RadioButton Name="PingDisplayGraphOption" DockPanel.Dock="Top" GroupName="PingDisplayMode" Content="Latency graph only" Margin="0,8,0,0" />
           <RadioButton Name="PingDisplayBothOption" DockPanel.Dock="Top" GroupName="PingDisplayMode" Content="Both (default)" Margin="0,8,0,0" IsChecked="True" />
+          <RadioButton Name="PingDisplayStatusOption" DockPanel.Dock="Top" GroupName="PingDisplayMode" Content="Status (UP/DOWN color tiles)" Margin="0,8,0,0" />
         </DockPanel>
       </TabItem>
       <TabItem Name="LayoutTab" Header="Colors">

@@ -422,6 +422,10 @@ internal class Configuration
 			{
 				ApplicationOptions.ProbeDisplayMode = PingDisplayMode.Graph;
 			}
+			else if (value.Equals(PingDisplayMode.Status.ToString()))
+			{
+				ApplicationOptions.ProbeDisplayMode = PingDisplayMode.Status;
+			}
 			else
 			{
 				ApplicationOptions.ProbeDisplayMode = PingDisplayMode.Both;

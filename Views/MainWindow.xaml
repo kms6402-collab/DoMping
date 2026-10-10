@@ -85,6 +85,7 @@
           </MenuItem.Icon>
         </MenuItem>
         <MenuItem Name="ViewModeBoth" Header="Both (default)" IsCheckable="True" IsChecked="True" Click="ViewModeBoth_Click" />
+        <MenuItem Name="ViewModeStatus" Header="Status (UP/DOWN color tiles)" IsCheckable="True" Click="ViewModeStatus_Click" />
       </MenuItem>
       <MenuItem Name="FilterMenu" Header="FILTER" FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New" InputGestureText="F4">
         <MenuItem.Icon>
@@ -334,6 +335,9 @@
                       <DataTrigger Value="True" Binding="{Binding HasResult}">
                         <Setter Property="Visibility" Value="Visible" />
                       </DataTrigger>
+                      <DataTrigger Value="Status" Binding="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=Mode}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                      </DataTrigger>
                     </Style.Triggers>
                   </Style>
                 </FrameworkElement.Style>
@@ -543,6 +547,28 @@
                   </ResourceDictionary>
                 </FrameworkElement.Resources>
               </c:AutoScrollListBox>
+
+              <!-- Status view: whole tile body painted in the status color, name + state centered -->
+              <Border Grid.Row="1" Grid.RowSpan="4" Background="{Binding Status, Converter={StaticResource ProbeStatusToBackgroundBrushConverter}}">
+                <FrameworkElement.Style>
+                  <Style TargetType="{x:Type Border}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                      <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                          <Condition Binding="{Binding HasResult}" Value="True" />
+                          <Condition Binding="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=Mode}" Value="Status" />
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Visibility" Value="Visible" />
+                      </MultiDataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </FrameworkElement.Style>
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="6">
+                  <TextBlock FontSize="22" FontWeight="Bold" Foreground="#0d130f" HorizontalAlignment="Center" Text="{Binding Status, Converter={StaticResource ProbeStatusToTagTextConverter}}" />
+                  <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="#0d130f" HorizontalAlignment="Center" Text="{Binding LatencyText}" />
+                </StackPanel>
+              </Border>
 
               <!-- Row 4: input row with the Start/Stop button; always visible -->
               <Grid Grid.Row="5">

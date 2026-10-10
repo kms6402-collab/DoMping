@@ -175,6 +175,9 @@ public partial class OptionsWindow : Window, IComponentConnector, IStyleConnecto
 		case PingDisplayMode.Graph:
 			PingDisplayGraphOption.IsChecked = true;
 			break;
+		case PingDisplayMode.Status:
+			PingDisplayStatusOption.IsChecked = true;
+			break;
 		default:
 			PingDisplayBothOption.IsChecked = true;
 			break;
@@ -561,6 +564,10 @@ public partial class OptionsWindow : Window, IComponentConnector, IStyleConnecto
 		else if (PingDisplayGraphOption.IsChecked == true)
 		{
 			ApplicationOptions.ProbeDisplayMode = PingDisplayMode.Graph;
+		}
+		else if (PingDisplayStatusOption.IsChecked == true)
+		{
+			ApplicationOptions.ProbeDisplayMode = PingDisplayMode.Status;
 		}
 		else
 		{

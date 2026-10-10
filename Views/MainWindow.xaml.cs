@@ -157,8 +157,8 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 			return;
 		}
 		PingDisplayMode mode = DisplaySettings.Instance.Mode;
-		bool showsSparkline = mode != PingDisplayMode.Log;
-		bool showsHistory = mode != PingDisplayMode.Graph;
+		bool showsSparkline = mode == PingDisplayMode.Graph || mode == PingDisplayMode.Both;
+		bool showsHistory = mode == PingDisplayMode.Log || mode == PingDisplayMode.Both;
 
 		// Tiles always stretch to fill the window height divided evenly across however
 		// many rows the chosen column count needs - matching the original vmPing grid
@@ -285,6 +285,7 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		ViewModeList.IsChecked = mode == PingDisplayMode.Log;
 		ViewModeCard.IsChecked = mode == PingDisplayMode.Graph;
 		ViewModeBoth.IsChecked = mode == PingDisplayMode.Both;
+		ViewModeStatus.IsChecked = mode == PingDisplayMode.Status;
 		ApplicationOptions.ProbeDisplayMode = mode;
 	}
 
@@ -303,12 +304,18 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		SetViewMode(PingDisplayMode.Both);
 	}
 
+	private void ViewModeStatus_Click(object sender, RoutedEventArgs e)
+	{
+		SetViewMode(PingDisplayMode.Status);
+	}
+
 	private void ViewModeCycleExecute(object sender, ExecutedRoutedEventArgs e)
 	{
 		PingDisplayMode mode = ApplicationOptions.ProbeDisplayMode switch
 		{
 			PingDisplayMode.Log => PingDisplayMode.Graph,
 			PingDisplayMode.Graph => PingDisplayMode.Both,
+			PingDisplayMode.Both => PingDisplayMode.Status,
 			_ => PingDisplayMode.Log,
 		};
 		SetViewMode(mode);
@@ -372,6 +379,7 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		ViewModeList.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Log;
 		ViewModeCard.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Graph;
 		ViewModeBoth.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Both;
+		ViewModeStatus.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Status;
 		ColumnCount.Value = ((ApplicationOptions.InitialColumnCount > 0) ? ApplicationOptions.InitialColumnCount : 2);
 		List<string> list = CommandLine.ParseArguments();
 		if (list.Count > 0)
@@ -666,6 +674,7 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 			ViewModeList.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Log;
 			ViewModeCard.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Graph;
 			ViewModeBoth.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Both;
+		ViewModeStatus.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Status;
 		}
 	}
 

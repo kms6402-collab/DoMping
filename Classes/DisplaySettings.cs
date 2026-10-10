@@ -6,7 +6,8 @@ public enum PingDisplayMode
 {
 	Log,
 	Graph,
-	Both
+	Both,
+	Status
 }
 
 public class DisplaySettings : INotifyPropertyChanged
