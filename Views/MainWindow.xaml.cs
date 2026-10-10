@@ -286,6 +286,8 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		ViewModeCard.IsChecked = mode == PingDisplayMode.Graph;
 		ViewModeBoth.IsChecked = mode == PingDisplayMode.Both;
 		ViewModeStatus.IsChecked = mode == PingDisplayMode.Status;
+		ViewModeHealth.IsChecked = mode == PingDisplayMode.Health;
+		ViewModeHeartbeat.IsChecked = mode == PingDisplayMode.Heartbeat;
 		ApplicationOptions.ProbeDisplayMode = mode;
 	}
 
@@ -309,6 +311,16 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		SetViewMode(PingDisplayMode.Status);
 	}
 
+	private void ViewModeHealth_Click(object sender, RoutedEventArgs e)
+	{
+		SetViewMode(PingDisplayMode.Health);
+	}
+
+	private void ViewModeHeartbeat_Click(object sender, RoutedEventArgs e)
+	{
+		SetViewMode(PingDisplayMode.Heartbeat);
+	}
+
 	private void ViewModeCycleExecute(object sender, ExecutedRoutedEventArgs e)
 	{
 		PingDisplayMode mode = ApplicationOptions.ProbeDisplayMode switch
@@ -316,6 +328,8 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 			PingDisplayMode.Log => PingDisplayMode.Graph,
 			PingDisplayMode.Graph => PingDisplayMode.Both,
 			PingDisplayMode.Both => PingDisplayMode.Status,
+			PingDisplayMode.Status => PingDisplayMode.Health,
+			PingDisplayMode.Health => PingDisplayMode.Heartbeat,
 			_ => PingDisplayMode.Log,
 		};
 		SetViewMode(mode);
@@ -380,6 +394,8 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		ViewModeCard.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Graph;
 		ViewModeBoth.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Both;
 		ViewModeStatus.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Status;
+		ViewModeHealth.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Health;
+		ViewModeHeartbeat.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Heartbeat;
 		ColumnCount.Value = ((ApplicationOptions.InitialColumnCount > 0) ? ApplicationOptions.InitialColumnCount : 2);
 		List<string> list = CommandLine.ParseArguments();
 		if (list.Count > 0)
@@ -675,6 +691,8 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 			ViewModeCard.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Graph;
 			ViewModeBoth.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Both;
 		ViewModeStatus.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Status;
+		ViewModeHealth.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Health;
+		ViewModeHeartbeat.IsChecked = ApplicationOptions.ProbeDisplayMode == PingDisplayMode.Heartbeat;
 		}
 	}
 

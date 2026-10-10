@@ -48,7 +48,17 @@ public class Probe : INotifyPropertyChanged
 
 	private ObservableCollection<double> latencyHistory = new ObservableCollection<double>();
 
+	private ObservableCollection<bool> replyHistory = new ObservableCollection<bool>();
+
+	private string heartbeatText = string.Empty;
+
 	private string latencyText = string.Empty;
+
+	private double uptimePercent;
+
+	private string uptimeText = "-";
+
+	private string latencySummaryText = string.Empty;
 
 	private const int MaxLatencyHistoryPoints = 20;
 
@@ -246,6 +256,84 @@ public class Probe : INotifyPropertyChanged
 		}
 	}
 
+	// success/failure of each recent reply, kept in step with LatencyHistory (Heartbeat view)
+	public ObservableCollection<bool> ReplyHistory
+	{
+		get
+		{
+			return replyHistory;
+		}
+		set
+		{
+			replyHistory = value;
+			NotifyPropertyChanged("ReplyHistory");
+		}
+	}
+
+	public string HeartbeatText
+	{
+		get
+		{
+			return heartbeatText;
+		}
+		set
+		{
+			if (value != heartbeatText)
+			{
+				heartbeatText = value;
+				NotifyPropertyChanged("HeartbeatText");
+			}
+		}
+	}
+
+	public double UptimePercent
+	{
+		get
+		{
+			return uptimePercent;
+		}
+		set
+		{
+			if (value != uptimePercent)
+			{
+				uptimePercent = value;
+				NotifyPropertyChanged("UptimePercent");
+			}
+		}
+	}
+
+	public string UptimeText
+	{
+		get
+		{
+			return uptimeText;
+		}
+		set
+		{
+			if (value != uptimeText)
+			{
+				uptimeText = value;
+				NotifyPropertyChanged("UptimeText");
+			}
+		}
+	}
+
+	public string LatencySummaryText
+	{
+		get
+		{
+			return latencySummaryText;
+		}
+		set
+		{
+			if (value != latencySummaryText)
+			{
+				latencySummaryText = value;
+				NotifyPropertyChanged("LatencySummaryText");
+			}
+		}
+	}
+
 	public static event EventHandler ActiveCountChanged;
 
 	public static event EventHandler AliasAutoResolved;
@@ -356,7 +444,7 @@ public class Probe : INotifyPropertyChanged
 					Statistics.Lost++;
 					IndeterminateCount++;
 					LatencyText = string.Empty;
-					RecordLatency(0.0);
+					RecordLatency(0.0, success: false);
 					if (Status == ProbeStatus.Up)
 					{
 						Status = ProbeStatus.Indeterminate;
@@ -392,7 +480,7 @@ public class Probe : INotifyPropertyChanged
 			{
 				Statistics.Lost++;
 				LatencyText = string.Empty;
-				RecordLatency(0.0);
+				RecordLatency(0.0, success: false);
 				if (Status == ProbeStatus.Scanner)
 				{
 					Status = ProbeStatus.Down;
@@ -600,7 +688,7 @@ public class Probe : INotifyPropertyChanged
 				{
 					stopwatch.Stop();
 					LatencyText = string.Empty;
-					RecordLatency(0.0);
+					RecordLatency(0.0, success: false);
 					if (cancellationToken.IsCancellationRequested)
 					{
 						break;
@@ -727,7 +815,7 @@ public class Probe : INotifyPropertyChanged
 			else
 			{
 				LatencyText = string.Empty;
-				RecordLatency(0.0);
+				RecordLatency(0.0, success: false);
 			}
 			await Application.Current.Dispatcher.BeginInvoke((Action)delegate
 			{
@@ -1039,18 +1127,29 @@ public class Probe : INotifyPropertyChanged
 		Application.Current.Dispatcher.BeginInvoke((Action)delegate
 		{
 			LatencyHistory = new ObservableCollection<double>();
+			ReplyHistory = new ObservableCollection<bool>();
+			LatencySummaryText = string.Empty;
+			HeartbeatText = string.Empty;
 		});
 	}
 
-	private void RecordLatency(double ms)
+	private void RecordLatency(double ms, bool success = true)
 	{
 		Application.Current.Dispatcher.BeginInvoke((Action)delegate
 		{
 			latencyHistory.Add(ms);
+			replyHistory.Add(success);
 			while (latencyHistory.Count > MaxLatencyHistoryPoints)
 			{
 				latencyHistory.RemoveAt(0);
 			}
+			while (replyHistory.Count > MaxLatencyHistoryPoints)
+			{
+				replyHistory.RemoveAt(0);
+			}
+			List<double> replies = latencyHistory.Where((double x, int i) => replyHistory[i]).ToList();
+			LatencySummaryText = (replies.Count == 0) ? "no replies" : $"min {replies.Min():0} · avg {replies.Average():0} · max {replies.Max():0} ms";
+			HeartbeatText = $"last {replyHistory.Count} · {replyHistory.Count((bool x) => !x)} failed";
 		});
 	}
 
@@ -1217,6 +1316,9 @@ public class Probe : INotifyPropertyChanged
 	private void DisplayStatistics()
 	{
 		StatisticsText = $"Sent: {Statistics.Sent} Received: {Statistics.Received} Lost: {Statistics.Lost}";
+		uint sent = Statistics.Sent;
+		UptimePercent = (sent == 0) ? 0.0 : (100.0 * Statistics.Received / sent);
+		UptimeText = (sent == 0) ? "-" : $"{UptimePercent:0.0}%";
 	}
 
 	private void TriggerStatusChange(StatusChangeLog status)

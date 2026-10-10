@@ -427,22 +427,7 @@ internal class Configuration
 		}
 		if (dictionary.TryGetValue("ProbeDisplayMode", out value))
 		{
-			if (value.Equals(PingDisplayMode.Log.ToString()))
-			{
-				ApplicationOptions.ProbeDisplayMode = PingDisplayMode.Log;
-			}
-			else if (value.Equals(PingDisplayMode.Graph.ToString()))
-			{
-				ApplicationOptions.ProbeDisplayMode = PingDisplayMode.Graph;
-			}
-			else if (value.Equals(PingDisplayMode.Status.ToString()))
-			{
-				ApplicationOptions.ProbeDisplayMode = PingDisplayMode.Status;
-			}
-			else
-			{
-				ApplicationOptions.ProbeDisplayMode = PingDisplayMode.Both;
-			}
+			ApplicationOptions.ProbeDisplayMode = Enum.TryParse(value, out PingDisplayMode mode) ? mode : PingDisplayMode.Both;
 		}
 	}
 }

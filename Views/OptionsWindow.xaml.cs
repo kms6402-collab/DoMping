@@ -178,6 +178,12 @@ public partial class OptionsWindow : Window, IComponentConnector, IStyleConnecto
 		case PingDisplayMode.Status:
 			PingDisplayStatusOption.IsChecked = true;
 			break;
+		case PingDisplayMode.Health:
+			PingDisplayHealthOption.IsChecked = true;
+			break;
+		case PingDisplayMode.Heartbeat:
+			PingDisplayHeartbeatOption.IsChecked = true;
+			break;
 		default:
 			PingDisplayBothOption.IsChecked = true;
 			break;
@@ -569,6 +575,14 @@ public partial class OptionsWindow : Window, IComponentConnector, IStyleConnecto
 		{
 			ApplicationOptions.ProbeDisplayMode = PingDisplayMode.Status;
 		}
+		else if (PingDisplayHealthOption.IsChecked == true)
+		{
+			ApplicationOptions.ProbeDisplayMode = PingDisplayMode.Health;
+		}
+		else if (PingDisplayHeartbeatOption.IsChecked == true)
+		{
+			ApplicationOptions.ProbeDisplayMode = PingDisplayMode.Heartbeat;
+		}
 		else
 		{
 			ApplicationOptions.ProbeDisplayMode = PingDisplayMode.Both;
@@ -624,6 +638,51 @@ public partial class OptionsWindow : Window, IComponentConnector, IStyleConnecto
 		{
 			e.Handled = true;
 		}
+	}
+
+	// Every color row is [label][hex TextBox][preview swatch]; clicking the swatch opens
+	// the Windows color picker for the TextBox right before it in the same row.
+	private void ColorSwatch_Click(object sender, MouseButtonEventArgs e)
+	{
+		System.Windows.Controls.Panel row = (System.Windows.Controls.Panel)((FrameworkElement)sender).Parent;
+		System.Windows.Controls.TextBox textBox = (System.Windows.Controls.TextBox)row.Children[row.Children.IndexOf((UIElement)sender) - 1];
+		System.Windows.Media.Color current = Colors.White;
+		if (Util.IsValidHtmlColor(textBox.Text))
+		{
+			current = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(textBox.Text);
+		}
+		using ColorDialog dialog = new ColorDialog
+		{
+			FullOpen = true,
+			Color = System.Drawing.Color.FromArgb(current.R, current.G, current.B),
+			CustomColors = GetCurrentPaletteForCustomColors()
+		};
+		if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+		{
+			return;
+		}
+		System.Drawing.Color picked = dialog.Color;
+		// keep any alpha the user had typed (#aarrggbb); the picker itself is RGB only
+		textBox.Text = (current.A == byte.MaxValue ? "#" : $"#{current.A:x2}") + $"{picked.R:x2}{picked.G:x2}{picked.B:x2}";
+	}
+
+	// Seed the picker's 16 "custom colors" slots with the distinct colors currently in use.
+	private int[] GetCurrentPaletteForCustomColors()
+	{
+		System.Collections.Generic.List<int> palette = new System.Collections.Generic.List<int>();
+		foreach (Visual child in ColorsDockPanel.GetChildren())
+		{
+			if (child is System.Windows.Controls.TextBox textBox && Util.IsValidHtmlColor(textBox.Text))
+			{
+				System.Windows.Media.Color c = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(textBox.Text);
+				int bgr = c.R | (c.G << 8) | (c.B << 16);
+				if (!palette.Contains(bgr) && palette.Count < 16)
+				{
+					palette.Add(bgr);
+				}
+			}
+		}
+		return palette.ToArray();
 	}
 
 	private void EmailRecipientAddress_LostFocus(object sender, RoutedEventArgs e)

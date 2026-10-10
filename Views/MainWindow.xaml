@@ -94,6 +94,16 @@
             <Image Source="{StaticResource icon.status-view}" VerticalAlignment="Center" Width="16" Height="16" />
           </MenuItem.Icon>
         </MenuItem>
+        <MenuItem Name="ViewModeHealth" Header="Health (uptime % and min/avg/max)" IsCheckable="True" Click="ViewModeHealth_Click">
+          <MenuItem.Icon>
+            <Image Source="{StaticResource icon.health-view}" VerticalAlignment="Center" Width="16" Height="16" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Name="ViewModeHeartbeat" Header="Heartbeat (recent reply strip)" IsCheckable="True" Click="ViewModeHeartbeat_Click">
+          <MenuItem.Icon>
+            <Image Source="{StaticResource icon.heartbeat-view}" VerticalAlignment="Center" Width="16" Height="16" />
+          </MenuItem.Icon>
+        </MenuItem>
       </MenuItem>
       <MenuItem Name="FilterMenu" Header="FILTER" FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New" InputGestureText="F4">
         <MenuItem.Icon>
@@ -346,6 +356,12 @@
                       <DataTrigger Value="Status" Binding="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=Mode}">
                         <Setter Property="Visibility" Value="Collapsed" />
                       </DataTrigger>
+                      <DataTrigger Value="Health" Binding="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=Mode}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                      </DataTrigger>
+                      <DataTrigger Value="Heartbeat" Binding="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=Mode}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                      </DataTrigger>
                     </Style.Triggers>
                   </Style>
                 </FrameworkElement.Style>
@@ -573,8 +589,85 @@
                   </Style>
                 </FrameworkElement.Style>
                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="6">
-                  <TextBlock FontSize="22" FontWeight="Bold" Foreground="#0d130f" HorizontalAlignment="Center" Text="{Binding Status, Converter={StaticResource ProbeStatusToTagTextConverter}}" />
-                  <TextBlock FontSize="13" FontWeight="SemiBold" Foreground="#0d130f" HorizontalAlignment="Center" Text="{Binding LatencyText}" />
+                  <TextBlock FontSize="15" FontWeight="Bold" Foreground="#0d130f" HorizontalAlignment="Center" Text="{Binding Status, Converter={StaticResource ProbeStatusToTagTextConverter}}" />
+                  <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="#0d130f" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" Text="{Binding Hostname}" />
+                  <TextBlock FontSize="11" Foreground="#0d130f" HorizontalAlignment="Center" Text="{Binding LatencyText}" />
+                </StackPanel>
+              </Border>
+
+              <!-- Health view: uptime % + bar, sent/lost, recent min/avg/max -->
+              <Border Grid.Row="1" Grid.RowSpan="4" Padding="12,6">
+                <FrameworkElement.Style>
+                  <Style TargetType="{x:Type Border}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                      <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                          <Condition Binding="{Binding HasResult}" Value="True" />
+                          <Condition Binding="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=Mode}" Value="Health" />
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Visibility" Value="Visible" />
+                      </MultiDataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </FrameworkElement.Style>
+                <StackPanel VerticalAlignment="Center">
+                  <TextBlock FontSize="11" Foreground="#5f7d6c" TextTrimming="CharacterEllipsis" Text="{Binding Hostname}" />
+                  <StackPanel Orientation="Horizontal">
+                    <TextBlock FontSize="24" FontWeight="Bold" Text="{Binding UptimeText}" Foreground="{Binding Status, Converter={StaticResource ProbeStatusToBackgroundBrushConverter}}" />
+                    <TextBlock FontSize="11" Foreground="#5f7d6c" Text="uptime" VerticalAlignment="Bottom" Margin="6,0,0,5" />
+                  </StackPanel>
+                  <ProgressBar Height="6" Maximum="100" BorderThickness="0" Background="#223028" Margin="0,2,0,6" Value="{Binding UptimePercent, Mode=OneWay}" Foreground="{Binding Status, Converter={StaticResource ProbeStatusToBackgroundBrushConverter}}" />
+                  <TextBlock FontSize="11" Foreground="#5f7d6c">
+                    <Run Text="SENT " /><Run Foreground="#d3ecdd" FontWeight="Bold" Text="{Binding Statistics.Sent, Mode=OneWay}" /><Run Text="   LOST " /><Run Foreground="#ff5d5d" FontWeight="Bold" Text="{Binding Statistics.Lost, Mode=OneWay}" />
+                  </TextBlock>
+                  <TextBlock FontSize="11" Foreground="#5f7d6c" Margin="0,2,0,0" Text="{Binding LatencySummaryText}" />
+                </StackPanel>
+              </Border>
+
+              <!-- Heartbeat view: one cell per recent reply (green ok / red failed), oldest left -->
+              <Border Grid.Row="1" Grid.RowSpan="4" Padding="10,6">
+                <FrameworkElement.Style>
+                  <Style TargetType="{x:Type Border}">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                      <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                          <Condition Binding="{Binding HasResult}" Value="True" />
+                          <Condition Binding="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=Mode}" Value="Heartbeat" />
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Visibility" Value="Visible" />
+                      </MultiDataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </FrameworkElement.Style>
+                <StackPanel VerticalAlignment="Center">
+                  <TextBlock FontSize="11" Foreground="#5f7d6c" TextTrimming="CharacterEllipsis" Text="{Binding Hostname}" />
+                  <ItemsControl Height="26" Margin="0,4" Focusable="False" IsTabStop="False" ItemsSource="{Binding ReplyHistory}">
+                    <ItemsControl.ItemsPanel>
+                      <ItemsPanelTemplate>
+                        <!-- 20 = Probe.MaxLatencyHistoryPoints -->
+                        <UniformGrid Rows="1" Columns="20" />
+                      </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Margin="1,0" CornerRadius="1">
+                          <FrameworkElement.Style>
+                            <Style TargetType="{x:Type Border}">
+                              <Setter Property="Background" Value="{Binding Source={x:Static classes:ApplicationOptions.BackgroundColor_Probe_Up}}" />
+                              <Style.Triggers>
+                                <DataTrigger Binding="{Binding}" Value="False">
+                                  <Setter Property="Background" Value="{Binding Source={x:Static classes:ApplicationOptions.BackgroundColor_Probe_Down}}" />
+                                </DataTrigger>
+                              </Style.Triggers>
+                            </Style>
+                          </FrameworkElement.Style>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <TextBlock FontSize="11" Foreground="#5f7d6c" Text="{Binding HeartbeatText}" />
                 </StackPanel>
               </Border>
 

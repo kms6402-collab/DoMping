@@ -319,6 +319,8 @@
           <RadioButton Name="PingDisplayGraphOption" DockPanel.Dock="Top" GroupName="PingDisplayMode" Content="Latency graph only" Margin="0,8,0,0" />
           <RadioButton Name="PingDisplayBothOption" DockPanel.Dock="Top" GroupName="PingDisplayMode" Content="Both (default)" Margin="0,8,0,0" IsChecked="True" />
           <RadioButton Name="PingDisplayStatusOption" DockPanel.Dock="Top" GroupName="PingDisplayMode" Content="Status (UP/DOWN color tiles)" Margin="0,8,0,0" />
+          <RadioButton Name="PingDisplayHealthOption" DockPanel.Dock="Top" GroupName="PingDisplayMode" Content="Health (uptime % and min/avg/max)" Margin="0,8,0,0" />
+          <RadioButton Name="PingDisplayHeartbeatOption" DockPanel.Dock="Top" GroupName="PingDisplayMode" Content="Heartbeat (recent reply strip)" Margin="0,8,0,0" />
         </DockPanel>
       </TabItem>
       <TabItem Name="LayoutTab" Header="Colors">
@@ -339,6 +341,9 @@
                   <Setter Property="BorderThickness" Value="1" />
                   <Setter Property="Width" Value="80" />
                   <Setter Property="Margin" Value="15,0,0,0" />
+                  <Setter Property="Cursor" Value="Hand" />
+                  <Setter Property="ToolTip" Value="Click to pick a color" />
+                  <EventSetter Event="MouseLeftButtonUp" Handler="ColorSwatch_Click" />
                 </Style>
               </ResourceDictionary>
             </FrameworkElement.Resources>
