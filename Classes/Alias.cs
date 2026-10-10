@@ -15,14 +15,17 @@ internal class Alias
 		}
 		try
 		{
-			XmlDocument xmlDocument = new XmlDocument();
-			xmlDocument.Load(Configuration.FilePath);
-			Dictionary<string, string> dictionary = new Dictionary<string, string>();
-			foreach (XmlNode item in xmlDocument.SelectNodes("/domping/aliases/alias"))
+			lock (Configuration.FileLock)
 			{
-				dictionary.Add(item.Attributes["host"].Value.ToLower(), item.InnerText);
+				XmlDocument xmlDocument = new XmlDocument();
+				xmlDocument.Load(Configuration.FilePath);
+				Dictionary<string, string> dictionary = new Dictionary<string, string>();
+				foreach (XmlNode item in xmlDocument.SelectNodes("/domping/aliases/alias"))
+				{
+					dictionary.Add(item.Attributes["host"].Value.ToLower(), item.InnerText);
+				}
+				return dictionary;
 			}
-			return dictionary;
 		}
 		catch (Exception ex)
 		{
@@ -40,18 +43,21 @@ internal class Alias
 		hostname = hostname.ToLower();
 		try
 		{
-			XmlDocument xmlDocument = new XmlDocument();
-			xmlDocument.Load(Configuration.FilePath);
-			XmlNode xmlNode = xmlDocument.SelectSingleNode("/domping/aliases");
-			foreach (XmlNode item in xmlDocument.SelectNodes("/domping/aliases/alias[@host=" + Configuration.GetEscapedXpath(hostname) + "]"))
+			lock (Configuration.FileLock)
 			{
-				xmlNode.RemoveChild(item);
+				XmlDocument xmlDocument = new XmlDocument();
+				xmlDocument.Load(Configuration.FilePath);
+				XmlNode xmlNode = xmlDocument.SelectSingleNode("/domping/aliases");
+				foreach (XmlNode item in xmlDocument.SelectNodes("/domping/aliases/alias[@host=" + Configuration.GetEscapedXpath(hostname) + "]"))
+				{
+					xmlNode.RemoveChild(item);
+				}
+				XmlElement xmlElement = xmlDocument.CreateElement("alias");
+				xmlElement.SetAttribute("host", hostname);
+				xmlElement.InnerText = alias;
+				xmlNode.AppendChild(xmlElement);
+				xmlDocument.Save(Configuration.FilePath);
 			}
-			XmlElement xmlElement = xmlDocument.CreateElement("alias");
-			xmlElement.SetAttribute("host", hostname);
-			xmlElement.InnerText = alias;
-			xmlNode.AppendChild(xmlElement);
-			xmlDocument.Save(Configuration.FilePath);
 		}
 		catch (Exception ex)
 		{
@@ -68,14 +74,17 @@ internal class Alias
 		key = key.ToLower();
 		try
 		{
-			XmlDocument xmlDocument = new XmlDocument();
-			xmlDocument.Load(Configuration.FilePath);
-			XmlNode xmlNode = xmlDocument.SelectSingleNode("/domping/aliases");
-			foreach (XmlNode item in xmlDocument.SelectNodes("/domping/aliases/alias[@host=" + Configuration.GetEscapedXpath(key) + "]"))
+			lock (Configuration.FileLock)
 			{
-				xmlNode.RemoveChild(item);
+				XmlDocument xmlDocument = new XmlDocument();
+				xmlDocument.Load(Configuration.FilePath);
+				XmlNode xmlNode = xmlDocument.SelectSingleNode("/domping/aliases");
+				foreach (XmlNode item in xmlDocument.SelectNodes("/domping/aliases/alias[@host=" + Configuration.GetEscapedXpath(key) + "]"))
+				{
+					xmlNode.RemoveChild(item);
+				}
+				xmlDocument.Save(Configuration.FilePath);
 			}
-			xmlDocument.Save(Configuration.FilePath);
 		}
 		catch (Exception ex)
 		{

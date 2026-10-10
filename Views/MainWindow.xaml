@@ -84,8 +84,16 @@
             <Image Source="{StaticResource icon.card-view}" VerticalAlignment="Center" Width="16" Height="16" />
           </MenuItem.Icon>
         </MenuItem>
-        <MenuItem Name="ViewModeBoth" Header="Both (default)" IsCheckable="True" IsChecked="True" Click="ViewModeBoth_Click" />
-        <MenuItem Name="ViewModeStatus" Header="Status (UP/DOWN color tiles)" IsCheckable="True" Click="ViewModeStatus_Click" />
+        <MenuItem Name="ViewModeBoth" Header="Both (default)" IsCheckable="True" IsChecked="True" Click="ViewModeBoth_Click">
+          <MenuItem.Icon>
+            <Image Source="{StaticResource icon.both-view}" VerticalAlignment="Center" Width="16" Height="16" />
+          </MenuItem.Icon>
+        </MenuItem>
+        <MenuItem Name="ViewModeStatus" Header="Status (UP/DOWN color tiles)" IsCheckable="True" Click="ViewModeStatus_Click">
+          <MenuItem.Icon>
+            <Image Source="{StaticResource icon.status-view}" VerticalAlignment="Center" Width="16" Height="16" />
+          </MenuItem.Icon>
+        </MenuItem>
       </MenuItem>
       <MenuItem Name="FilterMenu" Header="FILTER" FontSize="12" FontFamily="Cascadia Mono, Consolas, Courier New" InputGestureText="F4">
         <MenuItem.Icon>

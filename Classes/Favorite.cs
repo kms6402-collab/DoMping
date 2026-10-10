@@ -20,11 +20,14 @@ internal class Favorite
 		bool result = false;
 		try
 		{
-			XmlDocument xmlDocument = new XmlDocument();
-			xmlDocument.Load(Configuration.FilePath);
-			if (xmlDocument.SelectSingleNode("/domping/favorites/favorite[@title=" + Configuration.GetEscapedXpath(title) + "]") != null)
+			lock (Configuration.FileLock)
 			{
-				result = true;
+				XmlDocument xmlDocument = new XmlDocument();
+				xmlDocument.Load(Configuration.FilePath);
+				if (xmlDocument.SelectSingleNode("/domping/favorites/favorite[@title=" + Configuration.GetEscapedXpath(title) + "]") != null)
+				{
+					result = true;
+				}
 			}
 		}
 		catch (Exception ex)
@@ -44,11 +47,14 @@ internal class Favorite
 		List<string> list = new List<string>();
 		try
 		{
-			XmlDocument xmlDocument = new XmlDocument();
-			xmlDocument.Load(Configuration.FilePath);
-			foreach (XmlNode item in xmlDocument.SelectNodes("/domping/favorites/favorite"))
+			lock (Configuration.FileLock)
 			{
-				list.Add(item.Attributes["title"].Value);
+				XmlDocument xmlDocument = new XmlDocument();
+				xmlDocument.Load(Configuration.FilePath);
+				foreach (XmlNode item in xmlDocument.SelectNodes("/domping/favorites/favorite"))
+				{
+					list.Add(item.Attributes["title"].Value);
+				}
 			}
 		}
 		catch (Exception ex)
@@ -68,18 +74,21 @@ internal class Favorite
 		Favorite favorite = new Favorite();
 		try
 		{
-			favorite.Hostnames = new List<string>();
-			XmlDocument xmlDocument = new XmlDocument();
-			xmlDocument.Load(Configuration.FilePath);
-			XmlNode xmlNode = xmlDocument.SelectSingleNode("/domping/favorites/favorite[@title=" + Configuration.GetEscapedXpath(favoriteTitle) + "]");
-			if (xmlNode == null)
+			lock (Configuration.FileLock)
 			{
-				throw new KeyNotFoundException();
-			}
-			favorite.ColumnCount = int.Parse(xmlNode.Attributes["columncount"].Value);
-			foreach (XmlNode item in xmlDocument.SelectNodes("/domping/favorites/favorite[@title=" + Configuration.GetEscapedXpath(favoriteTitle) + "]/host"))
-			{
-				favorite.Hostnames.Add(item.InnerText);
+				favorite.Hostnames = new List<string>();
+				XmlDocument xmlDocument = new XmlDocument();
+				xmlDocument.Load(Configuration.FilePath);
+				XmlNode xmlNode = xmlDocument.SelectSingleNode("/domping/favorites/favorite[@title=" + Configuration.GetEscapedXpath(favoriteTitle) + "]");
+				if (xmlNode == null)
+				{
+					throw new KeyNotFoundException();
+				}
+				favorite.ColumnCount = int.Parse(xmlNode.Attributes["columncount"].Value);
+				foreach (XmlNode item in xmlDocument.SelectNodes("/domping/favorites/favorite[@title=" + Configuration.GetEscapedXpath(favoriteTitle) + "]/host"))
+				{
+					favorite.Hostnames.Add(item.InnerText);
+				}
 			}
 		}
 		catch (KeyNotFoundException)
@@ -106,14 +115,17 @@ internal class Favorite
 		}
 		try
 		{
-			XmlDocument xmlDocument = new XmlDocument();
-			xmlDocument.Load(Configuration.FilePath);
-			xmlDocument.SelectSingleNode("/domping/favorites");
-			foreach (XmlNode item in xmlDocument.SelectNodes("/domping/favorites/favorite[@title=" + Configuration.GetEscapedXpath(originalTitle) + "]"))
+			lock (Configuration.FileLock)
 			{
-				item.Attributes["title"].Value = newTitle;
+				XmlDocument xmlDocument = new XmlDocument();
+				xmlDocument.Load(Configuration.FilePath);
+				xmlDocument.SelectSingleNode("/domping/favorites");
+				foreach (XmlNode item in xmlDocument.SelectNodes("/domping/favorites/favorite[@title=" + Configuration.GetEscapedXpath(originalTitle) + "]"))
+				{
+					item.Attributes["title"].Value = newTitle;
+				}
+				xmlDocument.Save(Configuration.FilePath);
 			}
-			xmlDocument.Save(Configuration.FilePath);
 		}
 		catch (Exception ex)
 		{
@@ -129,24 +141,27 @@ internal class Favorite
 		}
 		try
 		{
-			XmlDocument xmlDocument = new XmlDocument();
-			xmlDocument.Load(Configuration.FilePath);
-			XmlNode xmlNode = xmlDocument.SelectSingleNode("/domping/favorites");
-			foreach (XmlNode item in xmlDocument.SelectNodes("/domping/favorites/favorite[@title=" + Configuration.GetEscapedXpath(title) + "]"))
+			lock (Configuration.FileLock)
 			{
-				xmlNode.RemoveChild(item);
+				XmlDocument xmlDocument = new XmlDocument();
+				xmlDocument.Load(Configuration.FilePath);
+				XmlNode xmlNode = xmlDocument.SelectSingleNode("/domping/favorites");
+				foreach (XmlNode item in xmlDocument.SelectNodes("/domping/favorites/favorite[@title=" + Configuration.GetEscapedXpath(title) + "]"))
+				{
+					xmlNode.RemoveChild(item);
+				}
+				XmlElement xmlElement = xmlDocument.CreateElement("favorite");
+				xmlElement.SetAttribute("title", title);
+				xmlElement.SetAttribute("columncount", columnCount.ToString());
+				foreach (string hostname in hostnames)
+				{
+					XmlElement xmlElement2 = xmlDocument.CreateElement("host");
+					xmlElement2.InnerText = hostname;
+					xmlElement.AppendChild(xmlElement2);
+				}
+				xmlNode.AppendChild(xmlElement);
+				xmlDocument.Save(Configuration.FilePath);
 			}
-			XmlElement xmlElement = xmlDocument.CreateElement("favorite");
-			xmlElement.SetAttribute("title", title);
-			xmlElement.SetAttribute("columncount", columnCount.ToString());
-			foreach (string hostname in hostnames)
-			{
-				XmlElement xmlElement2 = xmlDocument.CreateElement("host");
-				xmlElement2.InnerText = hostname;
-				xmlElement.AppendChild(xmlElement2);
-			}
-			xmlNode.AppendChild(xmlElement);
-			xmlDocument.Save(Configuration.FilePath);
 		}
 		catch (Exception ex)
 		{
@@ -162,14 +177,17 @@ internal class Favorite
 		}
 		try
 		{
-			XmlDocument xmlDocument = new XmlDocument();
-			xmlDocument.Load(Configuration.FilePath);
-			XmlNode xmlNode = xmlDocument.SelectSingleNode("/domping/favorites");
-			foreach (XmlNode item in xmlDocument.SelectNodes("/domping/favorites/favorite[@title=" + Configuration.GetEscapedXpath(title) + "]"))
+			lock (Configuration.FileLock)
 			{
-				xmlNode.RemoveChild(item);
+				XmlDocument xmlDocument = new XmlDocument();
+				xmlDocument.Load(Configuration.FilePath);
+				XmlNode xmlNode = xmlDocument.SelectSingleNode("/domping/favorites");
+				foreach (XmlNode item in xmlDocument.SelectNodes("/domping/favorites/favorite[@title=" + Configuration.GetEscapedXpath(title) + "]"))
+				{
+					xmlNode.RemoveChild(item);
+				}
+				xmlDocument.Save(Configuration.FilePath);
 			}
-			xmlDocument.Save(Configuration.FilePath);
 		}
 		catch (Exception ex)
 		{

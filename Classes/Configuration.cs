@@ -14,6 +14,10 @@ internal class Configuration
 {
 	public static string FilePath;
 
+	// Probes resolve aliases on thread-pool threads, so every read-modify-write of
+	// FilePath (Alias/Favorite/Configuration) must hold this lock or they collide.
+	public static readonly object FileLock = new object();
+
 	static Configuration()
 	{
 		FilePath = Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%\\DoMping\\DoMping.xml");
@@ -60,7 +64,10 @@ internal class Configuration
 			}
 			try
 			{
-				new XDocument(new XElement("domping", new XElement("aliases"), new XElement("favorites"), new XElement("configuration"), new XElement("colors"))).Save(FilePath);
+				lock (Configuration.FileLock)
+				{
+					new XDocument(new XElement("domping", new XElement("aliases"), new XElement("favorites"), new XElement("configuration"), new XElement("colors"))).Save(FilePath);
+				}
 			}
 			catch (Exception ex2)
 			{
@@ -92,15 +99,18 @@ internal class Configuration
 		}
 		try
 		{
-			XDocument xDocument = XDocument.Load(FilePath);
-			XElement xElement = xDocument.Element("domping");
-			XElement content = GenerateConfigurationNode();
-			XElement content2 = GenerateColorsNode();
-			xElement.Descendants("configuration").Remove();
-			xElement.Descendants("colors").Remove();
-			xElement.Add(content);
-			xElement.Add(content2);
-			xDocument.Save(FilePath);
+			lock (Configuration.FileLock)
+			{
+				XDocument xDocument = XDocument.Load(FilePath);
+				XElement xElement = xDocument.Element("domping");
+				XElement content = GenerateConfigurationNode();
+				XElement content2 = GenerateColorsNode();
+				xElement.Descendants("configuration").Remove();
+				xElement.Descendants("colors").Remove();
+				xElement.Add(content);
+				xElement.Add(content2);
+				xDocument.Save(FilePath);
+			}
 		}
 		catch (Exception ex)
 		{
@@ -130,11 +140,14 @@ internal class Configuration
 		}
 		try
 		{
-			XmlDocument xmlDocument = new XmlDocument();
-			xmlDocument.Load(FilePath);
-			LoadConfigurationNode(xmlDocument.SelectNodes("/domping/configuration/option"));
-			LoadColorsNode(xmlDocument.SelectNodes("/domping/colors/option"));
-			ApplicationOptions.UpdatePingOptions();
+			lock (Configuration.FileLock)
+			{
+				XmlDocument xmlDocument = new XmlDocument();
+				xmlDocument.Load(FilePath);
+				LoadConfigurationNode(xmlDocument.SelectNodes("/domping/configuration/option"));
+				LoadColorsNode(xmlDocument.SelectNodes("/domping/colors/option"));
+				ApplicationOptions.UpdatePingOptions();
+			}
 		}
 		catch (Exception ex)
 		{
