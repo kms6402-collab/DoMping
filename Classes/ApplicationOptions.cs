@@ -61,6 +61,10 @@ public static class ApplicationOptions
 
 	public static string LogStatusChangesPath { get; set; }
 
+	public static bool IsWebLogEnabled { get; set; }
+
+	public static int WebLogPort { get; set; }
+
 	public static bool IsAutoDismissEnabled { get; set; }
 
 	public static int AutoDismissMilliseconds { get; set; }
@@ -170,6 +174,8 @@ public static class ApplicationOptions
 		EmailPort = "25";
 		IsLogOutputEnabled = false;
 		IsLogStatusChangesEnabled = false;
+		IsWebLogEnabled = true;
+		WebLogPort = 80;
 		IsAutoDismissEnabled = false;
 		AutoDismissMilliseconds = 7000;
 		PopupOption = PopupNotificationOption.Always;

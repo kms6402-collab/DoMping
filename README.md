@@ -12,6 +12,7 @@ A multi-host ping/network monitor for Windows, rebranded and extended from **[vm
 - Status filter in the toolbar to show only hosts matching a given state (Up, Down, Slow, Scanning, Error, Idle)
 - Favorites, aliases, multi-host input, flood ping, popup/email/audio alerts, per-host or global logging
 - System tray integration, always-on-top, minimize/exit to tray
+- **Real-time web log**: every probe's output and status changes stream live to a browser page at `http://<this PC>/log` (see below)
 
 ## Requirements
 
@@ -38,6 +39,21 @@ DoMping [-i interval] [-w timeout] [<target_host>...]
 ```
 
 Hosts can also be prefixed to change probe type: `D/host` (DNS), `T/host` (traceroute), `S/host` (service ports).
+
+## Real-time web log
+
+While DoMping is running it serves a live log page to any browser on the network:
+
+```
+http://<IP of the PC running DoMping>/log      e.g. http://192.168.10.62/log
+```
+
+- Shows every reply line and every UP / DOWN / start / stop change from all hosts as it happens (Server-Sent Events, auto-reconnect).
+- Filter by host (click a host chip; Ctrl/Shift-click for several), by text, or show only problems / status changes. Pause, clear, and save the filtered log as `.txt`.
+- The last 5,000 entries are kept in memory, so a newly opened page starts with recent history.
+- Other endpoints: `/log/stream` (raw `text/event-stream`) and `/log/recent?after=<id>&limit=<n>` (JSON).
+- Configure in **Options → Logging → Real-time Web Log** (on/off and port; default port 80, enabled). The page is read-only and has no authentication, so only enable it on a trusted network.
+- It uses a plain TCP listener, so no admin rights or `netsh http add urlacl` are needed. On first start Windows Firewall may ask to allow DoMping — allow it on **Private** networks so other PCs can connect. If port 80 is already used (e.g. by IIS), DoMping shows an error at startup; pick another port such as 8080 and open `http://<IP>:8080/log`.
 
 ## License / attribution
 

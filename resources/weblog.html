@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DoMping Live Log</title>
+<meta name="color-scheme" content="dark">
+<style>
+  :root {
+    --bg: #0d1411;
+    --panel: #121c17;
+    --panel-2: #17241e;
+    --line: #22342b;
+    --text: #cfe9dc;
+    --muted: #6f8c7d;
+    --up: #33ff99;
+    --down: #ff5d5d;
+    --warn: #ffcf5c;
+    --error: #ffa94d;
+    --scan: #7fa89c;
+    --idle: #5f7d6c;
+    --accent: #33ff99;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, "D2Coding", "Malgun Gothic", monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 13px/1.45 var(--mono);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  header {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line);
+  }
+  .brand { font-weight: 700; letter-spacing: .04em; color: var(--accent); font-size: 15px; }
+  .brand span { color: var(--muted); font-weight: 400; margin-left: 6px; }
+  .conn { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--idle); flex: none; }
+  .conn.live .dot { background: var(--up); box-shadow: 0 0 8px var(--up); animation: pulse 1.6s ease-in-out infinite; }
+  .conn.live { color: var(--up); }
+  .conn.lost .dot { background: var(--down); }
+  .conn.lost { color: var(--down); }
+  @keyframes pulse { 50% { opacity: .35; } }
+  .stats { margin-left: auto; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; }
+  .stats b { color: var(--text); font-weight: 600; }
+
+  .toolbar {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    padding: 8px 16px; background: var(--panel); border-bottom: 1px solid var(--line);
+  }
+  input[type=search], select, button {
+    font: inherit; color: var(--text); background: var(--panel-2);
+    border: 1px solid var(--line); border-radius: 4px; padding: 5px 9px; min-height: 30px;
+  }
+  input[type=search] { flex: 1 1 220px; min-width: 0; }
+  input[type=search]:focus, select:focus, button:focus-visible { outline: 1px solid var(--accent); outline-offset: 0; }
+  button { cursor: pointer; white-space: nowrap; }
+  button:hover { border-color: var(--muted); }
+  button.on { color: var(--bg); background: var(--warn); border-color: var(--warn); }
+
+  .hosts {
+    display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 16px;
+    border-bottom: 1px solid var(--line); background: var(--bg); max-height: 30vh; overflow-y: auto;
+  }
+  .hosts:empty { display: none; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 7px;
+    border: 1px solid var(--line); border-radius: 999px; background: var(--panel);
+    cursor: pointer; user-select: none; max-width: 100%;
+  }
+  .chip .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chip .st { font-size: 11px; color: var(--muted); }
+  .chip.sel { border-color: var(--accent); background: #1b3127; }
+  .chip.dim { opacity: .45; }
+
+  main { flex: 1; overflow-y: auto; position: relative; }
+  #log { padding: 4px 0 24px; }
+  .row {
+    display: grid; grid-template-columns: 76px minmax(90px, 170px) 1fr; gap: 12px;
+    padding: 1px 16px; border-left: 3px solid transparent;
+  }
+  .row:hover { background: #ffffff08; }
+  .row .t { color: var(--muted); }
+  .row .h { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .m { white-space: pre-wrap; word-break: break-word; }
+  .row.s-up .h { color: var(--up); }
+  .row.s-down .h { color: var(--down); }
+  .row.s-warn .h { color: var(--warn); }
+  .row.s-error .h { color: var(--error); }
+  .row.s-scan .h, .row.s-idle .h { color: var(--scan); }
+  .row.bad .m { color: #ff9a9a; }
+  .row .ms { color: var(--up); }
+  .row.slow .ms { color: var(--warn); }
+  .row.status { background: #ffffff06; padding-top: 3px; padding-bottom: 3px; }
+  .row.status.s-up { border-left-color: var(--up); }
+  .row.status.s-down { border-left-color: var(--down); background: #ff5d5d14; }
+  .row.status.s-error { border-left-color: var(--error); }
+  .row.status.s-warn { border-left-color: var(--warn); }
+  .row.status.s-idle, .row.status.s-scan { border-left-color: var(--idle); }
+  .badge {
+    display: inline-block; padding: 0 7px; border-radius: 3px; font-weight: 700;
+    font-size: 11px; letter-spacing: .05em; text-transform: uppercase; margin-right: 8px;
+    color: var(--bg); background: var(--idle);
+  }
+  .s-up .badge { background: var(--up); }
+  .s-down .badge { background: var(--down); }
+  .s-error .badge { background: var(--error); }
+  .s-warn .badge { background: var(--warn); }
+  .empty { color: var(--muted); padding: 40px 16px; text-align: center; }
+
+  #jump {
+    position: fixed; right: 20px; bottom: 20px; display: none;
+    background: var(--accent); color: var(--bg); border: 0; font-weight: 700;
+    box-shadow: 0 4px 16px #0008;
+  }
+  #jump.show { display: block; }
+
+  @media (max-width: 640px) {
+    header, .toolbar, .hosts { padding-left: 12px; padding-right: 12px; }
+    .row { grid-template-columns: 64px 1fr; gap: 2px 10px; padding: 3px 12px; }
+    .row .m { grid-column: 1 / -1; padding-left: 0; }
+    .stats { margin-left: 0; width: 100%; }
+    .t .ms3 { display: none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">DoMping<span>live log</span></div>
+  <div id="conn" class="conn"><span class="dot"></span><span id="connText">연결 중…</span></div>
+  <div class="stats">
+    <span>호스트 <b id="statHosts">0</b></span>
+    <span>UP <b id="statUp" style="color:var(--up)">0</b></span>
+    <span>DOWN <b id="statDown" style="color:var(--down)">0</b></span>
+    <span>표시 <b id="statShown">0</b> / <b id="statTotal">0</b></span>
+  </div>
+</header>
+<div class="toolbar">
+  <input id="q" type="search" placeholder="검색 (호스트, IP, 메시지)…" autocomplete="off">
+  <select id="level" title="표시할 로그 종류">
+    <option value="all">전체 로그</option>
+    <option value="problems">문제만 (타임아웃·오류·DOWN)</option>
+    <option value="status">상태 변경만</option>
+  </select>
+  <button id="pause" type="button" title="새 로그 표시 일시정지">일시정지</button>
+  <button id="clear" type="button" title="화면의 로그 지우기">지우기</button>
+  <button id="save" type="button" title="현재 필터의 로그를 텍스트 파일로 저장">저장</button>
+</div>
+<div id="hosts" class="hosts" aria-label="호스트 필터"></div>
+<main id="scroller">
+  <div id="log"></div>
+  <div id="empty" class="empty">로그를 기다리는 중… DoMping에서 핑을 시작하면 여기에 실시간으로 표시됩니다.</div>
+</main>
+<button id="jump" type="button">↓ 최신 로그로</button>
+
+<script>
+(function () {
+  "use strict";
+  var MAX_ENTRIES = 5000;
+  var entries = [];            // all received entries (bounded)
+  var hosts = new Map();       // host -> {host, alias, status, el}
+  var selected = new Set();    // selected hosts for filtering (empty = all)
+  var paused = false, pendingWhilePaused = 0, follow = true;
+  var lastId = 0, session = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var logEl = $("log"), scroller = $("scroller"), emptyEl = $("empty");
+  var qEl = $("q"), levelEl = $("level"), pauseBtn = $("pause"), jumpBtn = $("jump");
+
+  function statusClass(s) {
+    switch (s) {
+      case "Up": case "LatencyNormal": case "Start": return "up";
+      case "Down": return "down";
+      case "Error": return "error";
+      case "Indeterminate": case "LatencyHigh": return "warn";
+      case "Scanner": return "scan";
+      default: return "idle";
+    }
+  }
+  var STATUS_LABEL = { Up: "UP", Down: "DOWN", Error: "ERROR", Indeterminate: "TIMEOUT", LatencyHigh: "SLOW",
+                       LatencyNormal: "NORMAL", Scanner: "SCANNING", Inactive: "IDLE", Start: "START", Stop: "STOP" };
+
+  var BAD_RE = /timed out|unreachable|unable|error|closed|fail|could not|invalid/i;
+  function isProblem(e) {
+    if (e.kind === "status") return e.status === "Down" || e.status === "Error" || e.status === "LatencyHigh";
+    return BAD_RE.test(e.text);
+  }
+
+  function pad(n, w) { n = String(n); while (n.length < (w || 2)) n = "0" + n; return n; }
+  function fmtTime(d) { return pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds()); }
+
+  function matches(e) {
+    if (selected.size && !selected.has(e.host)) return false;
+    var lv = levelEl.value;
+    if (lv === "status" && e.kind !== "status") return false;
+    if (lv === "problems" && !isProblem(e)) return false;
+    var q = qEl.value.trim().toLowerCase();
+    if (q && (e.host + " " + e.alias + " " + e.text).toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  }
+
+  // Strip the "[hh:mm:ss]  " prefix the app adds; we show our own timestamp column.
+  var PREFIX_RE = /^\[\d{1,2}:\d{2}:\d{2}(?:\s?[AP]M)?\]\s+/i;
+  var MS_RE = /\[(<?\d+)\s?ms\]/i;
+
+  function renderRow(e) {
+    var d = new Date(e.time);
+    var row = document.createElement("div");
+    var cls = statusClass(e.status);
+    row.className = "row s-" + cls + (e.kind === "status" ? " status" : "") + (isProblem(e) ? " bad" : "");
+
+    var t = document.createElement("span");
+    t.className = "t";
+    t.textContent = fmtTime(d);
+    t.title = d.toLocaleString();
+
+    var h = document.createElement("span");
+    h.className = "h";
+    h.textContent = e.alias || e.host;
+    h.title = e.alias ? e.alias + " (" + e.host + ")" : e.host;
+
+    var m = document.createElement("span");
+    m.className = "m";
+    if (e.kind === "status") {
+      var b = document.createElement("span");
+      b.className = "badge";
+      b.textContent = STATUS_LABEL[e.status] || e.status;
+      m.appendChild(b);
+      m.appendChild(document.createTextNode((e.alias ? e.alias + " (" + e.host + ")" : e.host) + " is " + e.text));
+    } else {
+      var text = e.text.replace(/\r\n/g, "\n").replace(PREFIX_RE, "");
+      var mm = MS_RE.exec(text);
+      if (mm) {
+        var ms = parseInt(mm[1].replace("<", ""), 10);
+        if (ms >= 200) row.className += " slow";
+        m.appendChild(document.createTextNode(text.slice(0, mm.index)));
+        var s = document.createElement("span");
+        s.className = "ms";
+        s.textContent = mm[0];
+        m.appendChild(s);
+        m.appendChild(document.createTextNode(text.slice(mm.index + mm[0].length)));
+      } else {
+        m.textContent = text;
+      }
+    }
+    row.appendChild(t); row.appendChild(h); row.appendChild(m);
+    return row;
+  }
+
+  function updateHost(e) {
+    var key = e.host;
+    if (!key) return;
+    var h = hosts.get(key);
+    if (!h) {
+      h = { host: key, alias: e.alias, status: e.status };
+      var el = document.createElement("span");
+      el.className = "chip";
+      el.setAttribute("role", "button");
+      el.tabIndex = 0;
+      el.innerHTML = '<span class="dot"></span><span class="name"></span><span class="st"></span>';
+      el.addEventListener("click", function (ev) { toggleHost(key, ev.ctrlKey || ev.metaKey || ev.shiftKey); });
+      el.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); toggleHost(key, ev.shiftKey); } });
+      h.el = el;
+      hosts.set(key, h);
+      var arr = Array.from(hosts.values()).sort(function (a, b) { return (a.alias || a.host).localeCompare(b.alias || b.host); });
+      var container = $("hosts");
+      arr.forEach(function (x) { container.appendChild(x.el); });
+    }
+    if (e.alias) h.alias = e.alias;
+    // Status-change events are authoritative; Start/Stop map to scanning/idle.
+    var st = e.status;
+    if (e.kind === "status") {
+      if (st === "Stop") st = "Inactive";
+      else if (st === "Start") st = "Scanner";
+      else if (st === "LatencyNormal") st = "Up";
+    }
+    h.status = st;
+    var c = statusClass(st);
+    var dot = h.el.querySelector(".dot");
+    dot.style.background = "var(--" + c + ")";
+    h.el.querySelector(".name").textContent = h.alias || h.host;
+    h.el.querySelector(".st").textContent = STATUS_LABEL[st] || st;
+    h.el.title = h.alias ? h.alias + " (" + h.host + ")" : h.host;
+  }
+
+  function toggleHost(key, additive) {
+    if (additive) {
+      if (selected.has(key)) selected.delete(key); else selected.add(key);
+    } else if (selected.size === 1 && selected.has(key)) {
+      selected.clear();
+    } else {
+      selected.clear(); selected.add(key);
+    }
+    refreshChips();
+    rerender();
+  }
+
+  function refreshChips() {
+    hosts.forEach(function (h, key) {
+      h.el.classList.toggle("sel", selected.has(key));
+      h.el.classList.toggle("dim", selected.size > 0 && !selected.has(key));
+    });
+  }
+
+  function updateStats() {
+    var up = 0, down = 0;
+    hosts.forEach(function (h) {
+      if (h.status === "Up") up++;
+      else if (h.status === "Down" || h.status === "Error") down++;
+    });
+    $("statHosts").textContent = hosts.size;
+    $("statUp").textContent = up;
+    $("statDown").textContent = down;
+    $("statTotal").textContent = entries.length;
+    $("statShown").textContent = logEl.childElementCount;
+    emptyEl.style.display = logEl.childElementCount ? "none" : "block";
+  }
+
+  function rerender() {
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < entries.length; i++) if (matches(entries[i])) frag.appendChild(renderRow(entries[i]));
+    logEl.textContent = "";
+    logEl.appendChild(frag);
+    pendingWhilePaused = 0;
+    updatePauseLabel();
+    updateStats();
+    if (follow) scrollToEnd();
+  }
+
+  var queue = [], scheduled = false;
+  function addEntries(list) {
+    for (var i = 0; i < list.length; i++) {
+      var e = list[i];
+      if (e.id <= lastId) continue;
+      lastId = e.id;
+      entries.push(e);
+      updateHost(e);
+      queue.push(e);
+    }
+    if (entries.length > MAX_ENTRIES) entries.splice(0, entries.length - MAX_ENTRIES);
+    if (!scheduled) { scheduled = true; requestAnimationFrame(flush); }
+  }
+
+  function flush() {
+    scheduled = false;
+    var batch = queue; queue = [];
+    if (paused) {
+      for (var j = 0; j < batch.length; j++) if (matches(batch[j])) pendingWhilePaused++;
+      updatePauseLabel(); updateStats();
+      return;
+    }
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < batch.length; i++) if (matches(batch[i])) frag.appendChild(renderRow(batch[i]));
+    logEl.appendChild(frag);
+    while (logEl.childElementCount > MAX_ENTRIES) logEl.removeChild(logEl.firstChild);
+    updateStats();
+    if (follow) scrollToEnd();
+  }
+
+  function scrollToEnd() { scroller.scrollTop = scroller.scrollHeight; }
+
+  scroller.addEventListener("scroll", function () {
+    var atBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 40;
+    follow = atBottom;
+    jumpBtn.classList.toggle("show", !atBottom);
+  });
+  jumpBtn.addEventListener("click", function () { follow = true; scrollToEnd(); jumpBtn.classList.remove("show"); });
+
+  function updatePauseLabel() {
+    pauseBtn.classList.toggle("on", paused);
+    pauseBtn.textContent = paused ? ("재개" + (pendingWhilePaused ? " (+" + pendingWhilePaused + ")" : "")) : "일시정지";
+  }
+  pauseBtn.addEventListener("click", function () {
+    paused = !paused;
+    if (!paused) rerender(); else updatePauseLabel();
+  });
+
+  $("clear").addEventListener("click", function () {
+    entries = [];
+    logEl.textContent = "";
+    pendingWhilePaused = 0;
+    updatePauseLabel(); updateStats();
+  });
+
+  $("save").addEventListener("click", function () {
+    var lines = [];
+    for (var i = 0; i < entries.length; i++) {
+      var e = entries[i];
+      if (!matches(e)) continue;
+      var d = new Date(e.time);
+      var who = e.alias ? e.alias + " (" + e.host + ")" : e.host;
+      var msg = e.kind === "status" ? "*** " + (STATUS_LABEL[e.status] || e.status) + " - " + who + " is " + e.text
+                                    : e.text.replace(/\r\n/g, "\n").replace(PREFIX_RE, "");
+      lines.push(d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + fmtTime(d) + "\t" + who + "\t" + msg);
+    }
+    var blob = new Blob([lines.join("\r\n") + "\r\n"], { type: "text/plain;charset=utf-8" });
+    var a = document.createElement("a");
+    var now = new Date();
+    a.href = URL.createObjectURL(blob);
+    a.download = "domping-log-" + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + "-" + pad(now.getHours()) + pad(now.getMinutes()) + ".txt";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  });
+
+  var debounce;
+  qEl.addEventListener("input", function () { clearTimeout(debounce); debounce = setTimeout(rerender, 150); });
+  levelEl.addEventListener("change", rerender);
+
+  // Persist simple view preferences per browser.
+  try {
+    var saved = JSON.parse(localStorage.getItem("domping-weblog") || "{}");
+    if (saved.level) levelEl.value = saved.level;
+  } catch (err) {}
+  levelEl.addEventListener("change", function () {
+    try { localStorage.setItem("domping-weblog", JSON.stringify({ level: levelEl.value })); } catch (err) {}
+  });
+
+  // ---- Live connection (Server-Sent Events; the browser auto-reconnects and resumes via Last-Event-ID) ----
+  var conn = $("conn"), connText = $("connText");
+  function setConn(state, text) { conn.className = "conn " + state; connText.textContent = text; }
+
+  function connect() {
+    if (!window.EventSource) { setConn("lost", "이 브라우저는 실시간 스트림을 지원하지 않습니다"); return; }
+    var src = new EventSource(lastId ? "/log/stream?after=" + lastId + "&backlog=5000" : "/log/stream?backlog=1000");
+    var batch = [];
+    src.onopen = function () { setConn("live", "실시간"); };
+    src.onmessage = function (ev) {
+      try { batch.push(JSON.parse(ev.data)); } catch (err) { return; }
+      if (batch.length >= 200) { addEntries(batch); batch = []; }
+      else Promise.resolve().then(function () { if (batch.length) { addEntries(batch); batch = []; } });
+    };
+    src.addEventListener("hello", function (ev) {
+      var s = null;
+      try { s = JSON.parse(ev.data).session; } catch (err) {}
+      if (session && s && s !== session) lastId = 0;   // DoMping restarted: ids begin again at 1
+      session = s;
+    });
+    src.addEventListener("ready", function () { setConn("live", "실시간"); });
+    src.onerror = function () {
+      if (src.readyState === EventSource.CLOSED) {
+        setConn("lost", "연결 끊김 – 재시도 중…");
+        setTimeout(connect, 3000);
+      } else {
+        setConn("lost", "재연결 중…");
+      }
+    };
+  }
+
+  updateStats();
+  connect();
+})();
+</script>
+</body>
+</html>

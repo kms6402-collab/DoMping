@@ -77,12 +77,29 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		LoadFavorites();
 		LoadAliases();
 		Configuration.Load();
+		StartWebLogServer();
 		RefreshGuiState();
 		ProbeItemsControl.ItemsSource = _ProbeCollection;
 		Probe.AliasAutoResolved += Probe_AliasAutoResolved;
 		CollectionViewSource.GetDefaultView(_ProbeCollection).Filter = ProbeStatusFilter;
 		DisplaySettings.Instance.PropertyChanged += DisplaySettings_PropertyChanged;
 		_ProbeCollection.CollectionChanged += ProbeCollection_CollectionChanged;
+	}
+
+	private void StartWebLogServer()
+	{
+		System.Windows.Application.Current.Exit += delegate
+		{
+			LogWebServer.Stop();
+		};
+		if (!LogWebServer.ApplyOptions())
+		{
+			string error = LogWebServer.LastError;
+			Dispatcher.BeginInvoke((Action)delegate
+			{
+				DialogWindow.ErrorWindow("The real-time web log (http://<this PC>:" + ApplicationOptions.WebLogPort + "/log) could not be started: " + error + " You can change the port or turn it off in Options > Logging.").ShowDialog();
+			}, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+		}
 	}
 
 	private void ProbeCollection_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)

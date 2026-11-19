@@ -1417,6 +1417,7 @@ public class Probe : INotifyPropertyChanged
 	public void AddHistory(string historyItem)
 	{
 		History.Add(historyItem);
+		LogHub.PublishOutput(this, historyItem);
 		if (History.Count > 3600)
 		{
 			History.RemoveAt(0);

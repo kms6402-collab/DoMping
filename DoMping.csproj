@@ -35,6 +35,8 @@
     <None Remove="resources\bomb-16.png" />
     <EmbeddedResource Include="domping.ico" LogicalName="domping.ico" />
     <EmbeddedResource Include="resources\bomb-16.png" LogicalName="resources/bomb-16.png" />
+    <None Remove="resources\weblog.html" />
+    <EmbeddedResource Include="resources\weblog.html" LogicalName="resources/weblog.html" />
   </ItemGroup>
 
 </Project>

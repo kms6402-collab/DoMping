@@ -299,6 +299,20 @@
               <Button Style="{StaticResource ButtonStandardStyle}" Width="85" Content="Browse..." HorizontalAlignment="Left" Click="BrowseLogStatusChangesPath_Click" />
             </StackPanel>
           </Grid>
+          <TextBlock DockPanel.Dock="Top" Text="Real-time Web Log" Margin="0,25,0,0" Style="{StaticResource OptionHeaderTextStyle}" />
+          <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,15,0,0">
+            <CheckBox Name="IsWebLogEnabled" Content="Serve a live log page to browsers on the network (http://&lt;this PC&gt;/log)" IsChecked="True" />
+          </StackPanel>
+          <Grid DockPanel.Dock="Top" Margin="30,10,0,0" VerticalAlignment="Top" Visibility="{Binding IsChecked, ElementName=IsWebLogEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel>
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Port" VerticalAlignment="Center" />
+                <TextBox Name="WebLogPort" Width="70" Margin="10,0,0,0" />
+                <TextBlock Text="(80 = no port needed in the address)" VerticalAlignment="Center" Margin="10,0,0,0" Opacity="0.6" />
+              </StackPanel>
+              <TextBlock Name="WebLogStatus" Margin="0,8,0,0" TextWrapping="Wrap" Opacity="0.8" />
+            </StackPanel>
+          </Grid>
         </DockPanel>
       </TabItem>
       <TabItem Name="DisplayTab" Header="Display">

@@ -137,6 +137,20 @@ public partial class OptionsWindow : Window, IComponentConnector, IStyleConnecto
 		IsLogOutputEnabled.IsChecked = ApplicationOptions.IsLogOutputEnabled;
 		LogStatusChangesPath.Text = ApplicationOptions.LogStatusChangesPath;
 		IsLogStatusChangesEnabled.IsChecked = ApplicationOptions.IsLogStatusChangesEnabled;
+		IsWebLogEnabled.IsChecked = ApplicationOptions.IsWebLogEnabled;
+		WebLogPort.Text = ApplicationOptions.WebLogPort.ToString();
+		if (LogWebServer.IsRunning)
+		{
+			WebLogStatus.Text = "Running - open " + string.Join("  or  ", LogWebServer.GetUrls());
+		}
+		else if (!string.IsNullOrEmpty(LogWebServer.LastError))
+		{
+			WebLogStatus.Text = "Not running: " + LogWebServer.LastError;
+		}
+		else
+		{
+			WebLogStatus.Text = "Not running.";
+		}
 	}
 
 	private void PopulateAdvancedOptions()
@@ -554,6 +568,25 @@ public partial class OptionsWindow : Window, IComponentConnector, IStyleConnecto
 		else
 		{
 			ApplicationOptions.IsLogStatusChangesEnabled = false;
+		}
+		if (IsWebLogEnabled.IsChecked == true)
+		{
+			if (!int.TryParse(WebLogPort.Text.Trim(), out int port) || port < 1 || port > 65535)
+			{
+				ShowError("Please enter a valid web log port (1-65535).", LogOutputTab, WebLogPort);
+				return false;
+			}
+			ApplicationOptions.IsWebLogEnabled = true;
+			ApplicationOptions.WebLogPort = port;
+		}
+		else
+		{
+			ApplicationOptions.IsWebLogEnabled = false;
+		}
+		if (!LogWebServer.ApplyOptions())
+		{
+			ShowError("The real-time web log could not be started: " + LogWebServer.LastError, LogOutputTab, WebLogPort);
+			return false;
 		}
 		return true;
 	}
