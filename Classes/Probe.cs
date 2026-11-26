@@ -62,6 +62,20 @@ public class Probe : INotifyPropertyChanged
 
 	private const int MaxLatencyHistoryPoints = 20;
 
+	// D/, T/ or S/ prefix stripped from Hostname by the last StartStop, and the bare host
+	// it applied to (see HostnameWithPrefix).
+	private string typePrefix;
+
+	private string typePrefixHost;
+
+	// First address IsHostInvalid resolved for the current probe run; reused so the
+	// service port scan doesn't do a fresh DNS lookup for every port on every cycle.
+	private IPAddress resolvedAddress;
+
+	// UDP gives no answer for an open (or filtered) port; we only wait long enough to
+	// catch an ICMP "port unreachable", which arrives within one round trip.
+	private const int MaxUdpWaitMs = 1000;
+
 	public static int ActiveCount
 	{
 		get
@@ -405,7 +419,9 @@ public class Probe : INotifyPropertyChanged
 			}
 			return;
 		}
-		await TryAutoAliasFromReverseDnsAsync(Hostname);
+		// Reverse DNS can take several seconds for hosts without a PTR record; run it in
+		// the background so the first ping / port check is not held up waiting for it.
+		_ = TryAutoAliasFromReverseDnsAsync(Hostname);
 		using Ping ping = new Ping();
 		while (!cancellationToken.IsCancellationRequested)
 		{
@@ -640,7 +656,9 @@ public class Probe : INotifyPropertyChanged
 			StopProbe(ProbeStatus.Error);
 			return;
 		}
-		await TryAutoAliasFromReverseDnsAsync(host);
+		// Reverse DNS can take several seconds for hosts without a PTR record; run it in
+		// the background so the first ping / port check is not held up waiting for it.
+		_ = TryAutoAliasFromReverseDnsAsync(host);
 		int errorCode = 0;
 		Stopwatch stopwatch = Stopwatch.StartNew();
 		while (!cancellationToken.IsCancellationRequested)
@@ -648,6 +666,7 @@ public class Probe : INotifyPropertyChanged
 			stopwatch.Restart();
 			using (TcpClient client = new TcpClient(ipVersion))
 			{
+				DisableSynRetries(client.Client);
 				Statistics.Sent++;
 				DisplayStatistics();
 				try
@@ -655,7 +674,10 @@ public class Probe : INotifyPropertyChanged
 					IAsyncResult asyncResult = client.BeginConnect(host, portnumber, null, null);
 					if (!asyncResult.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(3.0)))
 					{
-						throw new SocketException();
+						// An explicit error code: the parameterless constructor picks up whatever
+						// the last Win32 error happened to be (11001 there would wrongly stop the
+						// probe with "Unable to resolve hostname").
+						throw new SocketException((int)SocketError.TimedOut);
 					}
 					client.EndConnect(asyncResult);
 					if (cancellationToken.IsCancellationRequested)
@@ -773,8 +795,16 @@ public class Probe : INotifyPropertyChanged
 	{
 		InitializeProbe();
 		string host = Hostname;
+		List<(int Port, ServiceProtocol Protocol)> targets = ParseServicePorts();
+		// Show the port rows ("…" = pending) right away instead of after DNS resolution.
+		ObservableCollection<ServicePortResult> portRows = new ObservableCollection<ServicePortResult>(targets.Select((t) => new ServicePortResult
+		{
+			Port = t.Port,
+			Protocol = t.Protocol
+		}));
 		await Application.Current.Dispatcher.BeginInvoke((Action)delegate
 		{
+			ServicePorts = portRows;
 			AddHistory("*** Checking services on " + host + ":");
 		});
 		if (await IsHostInvalid(host, cancellationToken))
@@ -785,21 +815,33 @@ public class Probe : INotifyPropertyChanged
 			}
 			return;
 		}
-		await TryAutoAliasFromReverseDnsAsync(host);
-		List<(int Port, ServiceProtocol Protocol)> targets = ParseServicePorts();
-		await Application.Current.Dispatcher.BeginInvoke((Action)delegate
-		{
-			ServicePorts = new ObservableCollection<ServicePortResult>(targets.Select((t) => new ServicePortResult
-			{
-				Port = t.Port,
-				Protocol = t.Protocol
-			}));
-		});
+		// Reverse DNS can take several seconds for hosts without a PTR record; run it in
+		// the background so the first ping / port check is not held up waiting for it.
+		_ = TryAutoAliasFromReverseDnsAsync(host);
+		// Connect to the address resolved once above, not the hostname: otherwise every
+		// port of every cycle performs its own DNS lookup before it even starts connecting.
+		IPAddress targetAddress = resolvedAddress;
 		while (!cancellationToken.IsCancellationRequested)
 		{
 			Statistics.Sent++;
 			DisplayStatistics();
-			ServicePortCheckResult[] results = await Task.WhenAll(targets.Select((t) => CheckServicePortAsync(host, t.Port, t.Protocol, ApplicationOptions.PingTimeout)));
+			ServicePortCheckResult[] results = await Task.WhenAll(targets.Select(async delegate((int Port, ServiceProtocol Protocol) t, int index)
+			{
+				ServicePortCheckResult r0 = await CheckServicePortAsync(host, targetAddress, t.Port, t.Protocol, ApplicationOptions.PingTimeout, cancellationToken);
+				// Update each port's OPEN/CLOSED as soon as its own check finishes, rather
+				// than waiting for the slowest port (a filtered port takes the full timeout).
+				if (!cancellationToken.IsCancellationRequested)
+				{
+					_ = Application.Current.Dispatcher.BeginInvoke((Action)delegate
+					{
+						if (index < portRows.Count)
+						{
+							portRows[index].IsOpen = r0.IsOpen;
+						}
+					});
+				}
+				return r0;
+			}));
 			if (cancellationToken.IsCancellationRequested)
 			{
 				break;
@@ -914,38 +956,75 @@ public class Probe : INotifyPropertyChanged
 		return list;
 	}
 
-	private static async Task<ServicePortCheckResult> CheckServicePortAsync(string host, int port, ServiceProtocol protocol, int timeoutMs)
+	private static async Task<ServicePortCheckResult> CheckServicePortAsync(string host, IPAddress address, int port, ServiceProtocol protocol, int timeoutMs, CancellationToken cancellationToken)
 	{
 		Stopwatch stopwatch = Stopwatch.StartNew();
 		try
 		{
 			if (protocol == ServiceProtocol.Tcp)
 			{
-				using TcpClient client = new TcpClient();
-				Task connectTask = client.ConnectAsync(host, port);
-				Task winner = await Task.WhenAny(connectTask, Task.Delay(timeoutMs));
-				bool open = winner == connectTask && connectTask.IsCompletedSuccessfully && client.Connected;
-				return new ServicePortCheckResult(port, protocol, open, stopwatch.ElapsedMilliseconds);
+				using CancellationTokenSource timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+				timeout.CancelAfter(timeoutMs);
+				using TcpClient client = (address != null) ? new TcpClient(address.AddressFamily) : new TcpClient();
+				DisableSynRetries(client.Client);
+				// Cancelling the token aborts the pending connect, so a filtered port no
+				// longer leaves a half-open socket attempt running after we gave up on it.
+				if (address != null)
+				{
+					await client.ConnectAsync(address, port, timeout.Token);
+				}
+				else
+				{
+					await client.ConnectAsync(host, port, timeout.Token);
+				}
+				return new ServicePortCheckResult(port, protocol, client.Connected, stopwatch.ElapsedMilliseconds);
 			}
-			using UdpClient udp = new UdpClient();
-			udp.Connect(host, port);
+			using UdpClient udp = (address != null) ? new UdpClient(address.AddressFamily) : new UdpClient();
+			if (address != null)
+			{
+				udp.Connect(address, port);
+			}
+			else
+			{
+				udp.Connect(host, port);
+			}
 			byte[] payload = Encoding.ASCII.GetBytes("DoMping");
 			await udp.SendAsync(payload, payload.Length);
-			Task<UdpReceiveResult> receiveTask = udp.ReceiveAsync();
-			Task winner2 = await Task.WhenAny(receiveTask, Task.Delay(timeoutMs));
-			if (winner2 == receiveTask && receiveTask.IsCompletedSuccessfully)
-			{
-				return new ServicePortCheckResult(port, protocol, IsOpen: true, stopwatch.ElapsedMilliseconds);
-			}
+			using CancellationTokenSource udpWait = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+			udpWait.CancelAfter(Math.Min(timeoutMs, MaxUdpWaitMs));
+			// A reply means open. An ICMP "port unreachable" surfaces as ConnectionReset
+			// from ReceiveAsync (caught below) and means closed. No answer at all within the
+			// wait means open|filtered, which is reported as open. (Previously the receive
+			// task's ConnectionReset was never observed, so closed UDP ports showed OPEN.)
+			await udp.ReceiveAsync(udpWait.Token);
 			return new ServicePortCheckResult(port, protocol, IsOpen: true, stopwatch.ElapsedMilliseconds);
 		}
-		catch (SocketException ex) when (protocol == ServiceProtocol.Udp && ex.SocketErrorCode == SocketError.ConnectionReset)
+		catch (OperationCanceledException) when (protocol == ServiceProtocol.Udp && !cancellationToken.IsCancellationRequested)
 		{
-			return new ServicePortCheckResult(port, protocol, IsOpen: false, stopwatch.ElapsedMilliseconds);
+			return new ServicePortCheckResult(port, protocol, IsOpen: true, stopwatch.ElapsedMilliseconds);
 		}
 		catch
 		{
 			return new ServicePortCheckResult(port, protocol, IsOpen: false, stopwatch.ElapsedMilliseconds);
+		}
+	}
+
+	// Windows answers a "connection refused" (RST) by re-sending the SYN twice, so a
+	// closed port took ~2 s - the whole timeout - to report CLOSED. TCP_NOSYNRETRIES
+	// makes the RST fail the connect immediately (measured: 2000 ms -> 1-7 ms). Open
+	// ports are unaffected, and with our 2 s timeout a lost SYN was never retried in
+	// time anyway (the first SYN retransmit comes after ~3 s).
+	private const SocketOptionName TcpNoSynRetries = (SocketOptionName)9;
+
+	private static void DisableSynRetries(Socket socket)
+	{
+		try
+		{
+			socket.SetSocketOption(SocketOptionLevel.Tcp, TcpNoSynRetries, optionValue: true);
+		}
+		catch (SocketException)
+		{
+			// Not supported on this Windows build: keep the default behavior.
 		}
 	}
 
@@ -975,7 +1054,9 @@ public class Probe : INotifyPropertyChanged
 			}
 			return;
 		}
-		await TryAutoAliasFromReverseDnsAsync(Hostname);
+		// Reverse DNS can take several seconds for hosts without a PTR record; run it in
+		// the background so the first ping / port check is not held up waiting for it.
+		_ = TryAutoAliasFromReverseDnsAsync(Hostname);
 		AddHistory("");
 		using Ping ping = new Ping();
 		int ttl = 1;
@@ -1029,6 +1110,32 @@ public class Probe : INotifyPropertyChanged
 		IsActive = false;
 	}
 
+	public static bool HasTypePrefix(string host)
+	{
+		return host != null && (host.StartsWith("D/") || host.StartsWith("T/") || host.StartsWith("S/"));
+	}
+
+	public static string StripTypePrefix(string host)
+	{
+		return HasTypePrefix(host) ? host.Substring(2) : host;
+	}
+
+	// The hostname as the user originally typed it, including a D/, T/ or S/ prefix.
+	// StartStop strips the prefix from Hostname (so aliases, logs and the tile show the
+	// bare host), so anything that saves or re-lists the probe (favorites, multi-input)
+	// must use this instead of Hostname or the probe silently turns into a plain ping.
+	public string HostnameWithPrefix
+	{
+		get
+		{
+			if (typePrefix != null && !string.IsNullOrEmpty(Hostname) && !HasTypePrefix(Hostname) && string.Equals(Hostname, typePrefixHost, StringComparison.OrdinalIgnoreCase))
+			{
+				return typePrefix + Hostname;
+			}
+			return Hostname;
+		}
+	}
+
 	public void StartStop()
 	{
 		if (string.IsNullOrEmpty(Hostname))
@@ -1040,24 +1147,35 @@ public class Probe : INotifyPropertyChanged
 			StopProbe(ProbeStatus.Inactive);
 			return;
 		}
+		// Restarting a stopped S/ (or D/, T/) probe whose hostname wasn't edited must
+		// run the same kind of probe again, not fall back to an ICMP ping.
+		string target = HostnameWithPrefix;
 		CancelSource = new CancellationTokenSource();
 		IsActive = true;
-		if (Hostname.StartsWith("D/"))
+		if (HasTypePrefix(target))
+		{
+			typePrefix = target.Substring(0, 2);
+			typePrefixHost = target.Substring(2);
+			Hostname = typePrefixHost;
+		}
+		else
+		{
+			typePrefix = null;
+			typePrefixHost = null;
+		}
+		if (target.StartsWith("D/"))
 		{
 			Type = ProbeType.Dns;
-			Hostname = Hostname.Substring(2);
 			PerformDnsLookup(CancelSource.Token);
 		}
-		else if (Hostname.StartsWith("T/"))
+		else if (target.StartsWith("T/"))
 		{
 			Type = ProbeType.Traceroute;
-			Hostname = Hostname.Substring(2);
 			PerformTraceroute(CancelSource.Token);
 		}
-		else if (Hostname.StartsWith("S/"))
+		else if (target.StartsWith("S/"))
 		{
 			Type = ProbeType.Service;
-			Hostname = Hostname.Substring(2);
 			Task.Run(delegate
 			{
 				PerformServiceProbe(CancelSource.Token);
@@ -1180,6 +1298,7 @@ public class Probe : INotifyPropertyChanged
 	{
 		bool result = default(bool);
 		int num;
+		resolvedAddress = null;
 		try
 		{
 			switch (Uri.CheckHostName(host))
@@ -1190,6 +1309,7 @@ public class Probe : INotifyPropertyChanged
 				cancellationToken.ThrowIfCancellationRequested();
 				if (ipAddresses.Length != 0)
 				{
+					resolvedAddress = ipAddresses[0];
 					await Application.Current.Dispatcher.BeginInvoke((Action)delegate
 					{
 						AddHistory($"    ({ipAddresses[0]})");
@@ -1201,6 +1321,7 @@ public class Probe : INotifyPropertyChanged
 				throw new Exception();
 			case UriHostNameType.IPv4:
 			case UriHostNameType.IPv6:
+				IPAddress.TryParse(host.Trim('[', ']'), out resolvedAddress);
 				break;
 			}
 			result = false;

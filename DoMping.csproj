@@ -1,7 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <AppVersion>1.14.0</AppVersion>
+    <!-- The ONLY place the version is set: exe name, assembly/file version, the title
+         bar and the update check all derive from it. -->
+    <AppVersion>1.15.0</AppVersion>
     <AssemblyName>DoMping_v$(AppVersion)</AssemblyName>
     <OutputType>WinExe</OutputType>
     <UseWPF>True</UseWPF>
@@ -13,8 +15,20 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
-    <Version>$(AppVersion).0</Version>
+    <!-- Generate only the version attributes (from AppVersion); the rest stays in
+         Properties/AssemblyInfo.cs. -->
+    <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
+    <GenerateAssemblyTitleAttribute>False</GenerateAssemblyTitleAttribute>
+    <GenerateAssemblyDescriptionAttribute>False</GenerateAssemblyDescriptionAttribute>
+    <GenerateAssemblyConfigurationAttribute>False</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>False</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>False</GenerateAssemblyProductAttribute>
+    <GenerateAssemblyCopyrightAttribute>False</GenerateAssemblyCopyrightAttribute>
+    <GenerateAssemblyTrademarkAttribute>False</GenerateAssemblyTrademarkAttribute>
+    <IncludeSourceRevisionInInformationalVersion>False</IncludeSourceRevisionInInformationalVersion>
+    <Version>$(AppVersion)</Version>
+    <AssemblyVersion>$(AppVersion).0</AssemblyVersion>
+    <FileVersion>$(AppVersion).0</FileVersion>
     <NoWarn>CA1416</NoWarn>
     <!-- Framework-dependent build: requires the .NET 10 Desktop Runtime already
          installed on the target PC (see the Help window for the download link).

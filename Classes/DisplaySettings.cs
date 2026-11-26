@@ -16,7 +16,7 @@ public class DisplaySettings : INotifyPropertyChanged
 {
 	public static DisplaySettings Instance { get; } = new DisplaySettings();
 
-	private PingDisplayMode mode = PingDisplayMode.Both;
+	private PingDisplayMode mode = PingDisplayMode.Log;
 
 	private ProbeStatus? statusFilter;
 

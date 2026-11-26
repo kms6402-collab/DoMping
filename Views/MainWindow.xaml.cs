@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -404,7 +405,7 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 			for (int i = 0; i < list.Count; i++)
 			{
 				_ProbeCollection[i].Hostname = list[i];
-				_ProbeCollection[i].Alias = (_Aliases.ContainsKey(_ProbeCollection[i].Hostname.ToLower()) ? _Aliases[_ProbeCollection[i].Hostname.ToLower()] : null);
+				_ProbeCollection[i].Alias = LookupAlias(_ProbeCollection[i].Hostname);
 				_ProbeCollection[i].StartStop();
 			}
 		}
@@ -425,6 +426,111 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 			}
 		}
 		RefreshColumnCountTag();
+		StartUpdateChecks();
+	}
+
+	// ---- Update check (GitHub releases) -------------------------------------------
+
+	private static readonly TimeSpan UpdateCheckInterval = TimeSpan.FromHours(3);
+
+	private DispatcherTimer _updateTimer;
+
+	private UpdateInfo _availableUpdate;
+
+	private bool _isUpdating;
+
+	private void StartUpdateChecks()
+	{
+		// First check shortly after startup (so it never slows the first pings down),
+		// then periodically, so a long-running monitor also learns about new releases.
+		_updateTimer = new DispatcherTimer(DispatcherPriority.Background)
+		{
+			Interval = TimeSpan.FromSeconds(5)
+		};
+		_updateTimer.Tick += async delegate
+		{
+			_updateTimer.Interval = UpdateCheckInterval;
+			await CheckForUpdateAsync();
+		};
+		_updateTimer.Start();
+	}
+
+	private async Task CheckForUpdateAsync()
+	{
+		if (_isUpdating)
+		{
+			return;
+		}
+		UpdateInfo info = await UpdateService.CheckForUpdateAsync();
+		if (info == null || _isUpdating)
+		{
+			return;
+		}
+		_availableUpdate = info;
+		string text = $"v{info.Version.ToString(3)}";
+		UpdateNewBadge.ToolTip = $"A new version ({text}) is available on GitHub.";
+		UpdateButton.Content = $"UPDATE {text}";
+		UpdateButton.ToolTip = $"Download DoMping {text} from GitHub, replace this version and restart.";
+		UpdateButton.IsEnabled = true;
+		UpdateNewBadge.Visibility = Visibility.Visible;
+		UpdateButton.Visibility = Visibility.Visible;
+	}
+
+	private async void UpdateButton_Click(object sender, RoutedEventArgs e)
+	{
+		UpdateInfo info = _availableUpdate;
+		if (info == null || _isUpdating)
+		{
+			return;
+		}
+		string current = UpdateService.CurrentVersion.ToString(3);
+		string next = info.Version.ToString(3);
+		DialogWindow confirm = new DialogWindow(DialogWindow.DialogIcon.Info, "Update DoMping", $"Update DoMping from v{current} to v{next}?\n\nThe new version is downloaded from GitHub, replaces this one, and DoMping restarts. Running pings will stop during the restart.", "Update now", isCancelButtonVisible: true);
+		confirm.Owner = this;
+		if (confirm.ShowDialog() != true)
+		{
+			return;
+		}
+		_isUpdating = true;
+		UpdateButton.IsEnabled = false;
+		UpdateButton.Content = "DOWNLOADING 0%";
+		try
+		{
+			Progress<double> progress = new Progress<double>(delegate(double p)
+			{
+				UpdateButton.Content = $"DOWNLOADING {(int)(p * 100)}%";
+			});
+			string downloaded = await UpdateService.DownloadAsync(info, progress);
+			UpdateButton.Content = "RESTARTING...";
+			UpdateService.InstallAndRestart(info, downloaded);
+			if (NotifyIcon != null)
+			{
+				NotifyIcon.Visible = false;
+				NotifyIcon.Dispose();
+				NotifyIcon = null;
+			}
+			System.Windows.Application.Current.Shutdown();
+		}
+		catch (Exception ex)
+		{
+			_isUpdating = false;
+			UpdateButton.IsEnabled = true;
+			UpdateButton.Content = $"UPDATE v{next}";
+			string hint = (ex is UnauthorizedAccessException || ex is System.IO.IOException) ? " DoMping may not have write access to its folder; you can download the new version manually from the releases page." : string.Empty;
+			DialogWindow error = DialogWindow.ErrorWindow("The update failed: " + ex.Message + hint);
+			error.Owner = this;
+			error.ShowDialog();
+			try
+			{
+				Process.Start(new ProcessStartInfo(info.ReleasePageUrl ?? UpdateService.ReleasesPageUrl)
+				{
+					UseShellExecute = true
+				});
+			}
+			catch
+			{
+			}
+		}
 	}
 
 	private void RefreshGuiState()
@@ -562,7 +668,7 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		{
 			if (!string.IsNullOrWhiteSpace(_ProbeCollection[i].Hostname))
 			{
-				string existingHost = _ProbeCollection[i].Hostname.Trim();
+				string existingHost = _ProbeCollection[i].HostnameWithPrefix.Trim();
 				string existingAlias = _ProbeCollection[i].Alias;
 				list.Add(string.IsNullOrWhiteSpace(existingAlias) ? existingHost : (existingHost + "/" + existingAlias.Trim()));
 			}
@@ -588,17 +694,20 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 				for (int j = 0; j < entries.Count; j++)
 				{
 					string host = entries[j].Host;
+					// Aliases are keyed by the bare host: StartStop strips a D/, T/ or S/
+					// prefix, after which the alias is looked up again by that bare name.
+					string aliasKey = Probe.StripTypePrefix(host);
 					_ProbeCollection[j].Hostname = host;
 					if (!string.IsNullOrWhiteSpace(entries[j].Alias))
 					{
 						string alias = entries[j].Alias.Trim();
 						_ProbeCollection[j].Alias = alias;
-						_Aliases[host.ToLower()] = alias;
-						Alias.AddAlias(host, alias);
+						_Aliases[aliasKey.ToLower()] = alias;
+						Alias.AddAlias(aliasKey, alias);
 					}
 					else
 					{
-						_ProbeCollection[j].Alias = (_Aliases.ContainsKey(host.ToLower()) ? _Aliases[host.ToLower()] : null);
+						_ProbeCollection[j].Alias = LookupAlias(host);
 					}
 				}
 				for (int j = 0; j < entries.Count; j++)
@@ -752,7 +861,7 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 				for (int i = 0; i < contents.Hostnames.Count; i++)
 				{
 					_ProbeCollection[i].Hostname = contents.Hostnames[i];
-					_ProbeCollection[i].Alias = (_Aliases.ContainsKey(_ProbeCollection[i].Hostname.ToLower()) ? _Aliases[_ProbeCollection[i].Hostname.ToLower()] : null);
+					_ProbeCollection[i].Alias = LookupAlias(_ProbeCollection[i].Hostname);
 				}
 				for (int i = 0; i < contents.Hostnames.Count; i++)
 				{
@@ -769,6 +878,16 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 			dialogWindow.Owner = this;
 			dialogWindow.ShowDialog();
 		}
+	}
+
+	private string LookupAlias(string hostname)
+	{
+		if (string.IsNullOrEmpty(hostname))
+		{
+			return null;
+		}
+		string key = Probe.StripTypePrefix(hostname).ToLower();
+		return _Aliases.ContainsKey(key) ? _Aliases[key] : null;
 	}
 
 	private void LoadAliases()
@@ -833,7 +952,7 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 
 	private void CreateFavorite_Click(object sender, RoutedEventArgs e)
 	{
-		if (new NewFavoriteWindow(_ProbeCollection.Select((Probe x) => x.Hostname).ToList(), (int)ColumnCount.Value, isEditExisting: false, base.Title.EndsWith(" - DoMping") ? base.Title.Remove(base.Title.Length - " - DoMping".Length) : string.Empty)
+		if (new NewFavoriteWindow(_ProbeCollection.Select((Probe x) => x.HostnameWithPrefix).ToList(), (int)ColumnCount.Value, isEditExisting: false, base.Title.EndsWith(" - DoMping") ? base.Title.Remove(base.Title.Length - " - DoMping".Length) : string.Empty)
 		{
 			Owner = this
 		}.ShowDialog() == true)
@@ -948,7 +1067,7 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 		Probe probe = (sender as System.Windows.Controls.TextBox).DataContext as Probe;
 		if (probe.Hostname != null)
 		{
-			probe.Alias = (_Aliases.ContainsKey(probe.Hostname.ToLower()) ? _Aliases[probe.Hostname.ToLower()] : null);
+			probe.Alias = LookupAlias(probe.Hostname);
 		}
 		if (string.IsNullOrEmpty(probe.Alias))
 		{

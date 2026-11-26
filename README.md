@@ -12,6 +12,7 @@ A multi-host ping/network monitor for Windows, rebranded and extended from **[vm
 - Status filter in the toolbar to show only hosts matching a given state (Up, Down, Slow, Scanning, Error, Idle)
 - Favorites, aliases, multi-host input, flood ping, popup/email/audio alerts, per-host or global logging
 - System tray integration, always-on-top, minimize/exit to tray
+- **Update check**: on startup (and every 3 hours) DoMping checks the latest GitHub release; when a newer one exists a blinking `NEW` badge and an `UPDATE vX.Y.Z` button appear next to the version in the top-left corner. Clicking it downloads the release exe (size and SHA-256 verified), replaces the running exe and restarts. Releases must attach the single-file `DoMping_vX.Y.Z.exe` and use a `vX.Y.Z` tag.
 
 ## Requirements
 

@@ -184,8 +184,11 @@ public partial class OptionsWindow : Window, IComponentConnector, IStyleConnecto
 		case PingDisplayMode.Heartbeat:
 			PingDisplayHeartbeatOption.IsChecked = true;
 			break;
-		default:
+		case PingDisplayMode.Both:
 			PingDisplayBothOption.IsChecked = true;
+			break;
+		default:
+			PingDisplayLogOption.IsChecked = true;
 			break;
 		}
 	}
@@ -206,7 +209,7 @@ public partial class OptionsWindow : Window, IComponentConnector, IStyleConnecto
 		ForegroundColor_Stats_Up.Text = ApplicationOptions.ForegroundColor_Stats_Up;
 		ForegroundColor_Stats_Down.Text = ApplicationOptions.ForegroundColor_Stats_Down;
 		ForegroundColor_Stats_Error.Text = ApplicationOptions.ForegroundColor_Stats_Error;
-		ForegroundColor_Stats_Indeterminate.Text = ApplicationOptions.ForegroundColor_Stats_Inactive;
+		ForegroundColor_Stats_Indeterminate.Text = ApplicationOptions.ForegroundColor_Stats_Indeterminate;
 		ForegroundColor_Alias_Inactive.Text = ApplicationOptions.ForegroundColor_Alias_Inactive;
 		ForegroundColor_Alias_Up.Text = ApplicationOptions.ForegroundColor_Alias_Up;
 		ForegroundColor_Alias_Down.Text = ApplicationOptions.ForegroundColor_Alias_Down;
@@ -313,7 +316,7 @@ public partial class OptionsWindow : Window, IComponentConnector, IStyleConnecto
 				}
 				else if (result2 > 20)
 				{
-					result2 = 2;
+					result2 = 20;
 				}
 			}
 			else
@@ -583,9 +586,13 @@ public partial class OptionsWindow : Window, IComponentConnector, IStyleConnecto
 		{
 			ApplicationOptions.ProbeDisplayMode = PingDisplayMode.Heartbeat;
 		}
-		else
+		else if (PingDisplayBothOption.IsChecked == true)
 		{
 			ApplicationOptions.ProbeDisplayMode = PingDisplayMode.Both;
+		}
+		else
+		{
+			ApplicationOptions.ProbeDisplayMode = PingDisplayMode.Log;
 		}
 		return true;
 	}

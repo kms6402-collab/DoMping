@@ -29,8 +29,39 @@
   </FrameworkElement.Resources>
   <DockPanel Background="#0a0f0c">
     <DockPanel DockPanel.Dock="Top" Background="#0a0f0c" LastChildFill="True">
-      <TextBlock Name="AppTitleText" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="10,0,18,0" FontSize="12" FontWeight="Bold" Foreground="#33ff99" IsHitTestVisible="False" />
-      <Border DockPanel.Dock="Left" Width="1" Margin="0,7" Background="#223028" />
+      <TextBlock Name="AppTitleText" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="10,0,6,0" FontSize="12" FontWeight="Bold" Foreground="#33ff99" IsHitTestVisible="False" />
+      <!-- Shown when GitHub has a newer release (see UpdateService) -->
+      <Border Name="UpdateNewBadge" DockPanel.Dock="Left" Visibility="Collapsed" VerticalAlignment="Center" Margin="0,0,6,0" Padding="5,1,5,1" CornerRadius="3" Background="#ff5d5d" ToolTipService.InitialShowDelay="300">
+        <TextBlock Text="NEW" FontSize="10" FontWeight="Bold" Foreground="#0a0f0c" />
+        <Border.Triggers>
+          <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+            <BeginStoryboard>
+              <Storyboard>
+                <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1" To="0.45" Duration="0:0:0.9" AutoReverse="True" RepeatBehavior="Forever" />
+              </Storyboard>
+            </BeginStoryboard>
+          </EventTrigger>
+        </Border.Triggers>
+      </Border>
+      <Button Name="UpdateButton" DockPanel.Dock="Left" Visibility="Collapsed" VerticalAlignment="Center" Margin="0,0,6,0" Cursor="Hand" Focusable="False" IsTabStop="False" Click="UpdateButton_Click" ToolTipService.InitialShowDelay="300">
+        <Button.Template>
+          <ControlTemplate TargetType="{x:Type Button}">
+            <Border Name="bd" Background="#0f1f17" BorderBrush="#33ff99" BorderThickness="1" CornerRadius="3" Padding="7,1,7,1">
+              <TextBlock Name="UpdateButtonText" Text="{TemplateBinding Content}" FontSize="11" FontWeight="Bold" Foreground="#33ff99" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="UIElement.IsMouseOver" Value="True">
+                <Setter TargetName="bd" Property="Background" Value="#1d4030" />
+              </Trigger>
+              <Trigger Property="UIElement.IsEnabled" Value="False">
+                <Setter TargetName="bd" Property="BorderBrush" Value="#5f7d6c" />
+                <Setter TargetName="UpdateButtonText" Property="Foreground" Value="#7fa89c" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Button.Template>
+      </Button>
+      <Border DockPanel.Dock="Left" Width="1" Margin="12,7,0,7" Background="#223028" />
     <Menu FontStretch="Normal" Background="#0a0f0c">
       <FrameworkElement.Resources>
         <ResourceDictionary>
@@ -74,7 +105,7 @@
         <MenuItem.Icon>
           <Image Source="{StaticResource icon.eye}" VerticalAlignment="Center" Width="16" Height="16" />
         </MenuItem.Icon>
-        <MenuItem Name="ViewModeList" Header="List (reply log only)" IsCheckable="True" Click="ViewModeList_Click">
+        <MenuItem Name="ViewModeList" Header="List (reply log only, default)" IsCheckable="True" IsChecked="True" Click="ViewModeList_Click">
           <MenuItem.Icon>
             <Image Source="{StaticResource icon.list-view}" VerticalAlignment="Center" Width="16" Height="16" />
           </MenuItem.Icon>
@@ -84,7 +115,7 @@
             <Image Source="{StaticResource icon.card-view}" VerticalAlignment="Center" Width="16" Height="16" />
           </MenuItem.Icon>
         </MenuItem>
-        <MenuItem Name="ViewModeBoth" Header="Both (default)" IsCheckable="True" IsChecked="True" Click="ViewModeBoth_Click">
+        <MenuItem Name="ViewModeBoth" Header="Both (graph + reply log)" IsCheckable="True" Click="ViewModeBoth_Click">
           <MenuItem.Icon>
             <Image Source="{StaticResource icon.both-view}" VerticalAlignment="Center" Width="16" Height="16" />
           </MenuItem.Icon>

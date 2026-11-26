@@ -315,9 +315,9 @@
           </DockPanel>
           <TextBlock DockPanel.Dock="Top" Text="Ping Screen" Margin="0,25,0,10" Style="{StaticResource OptionHeaderTextStyle}" />
           <TextBlock DockPanel.Dock="Top" Text="Choose what each host tile shows while a probe is running:" Margin="0,0,0,5" />
-          <RadioButton Name="PingDisplayLogOption" DockPanel.Dock="Top" GroupName="PingDisplayMode" Content="Reply log only (the classic scrolling text output)" Margin="0,10,0,0" />
+          <RadioButton Name="PingDisplayLogOption" DockPanel.Dock="Top" GroupName="PingDisplayMode" Content="List - reply log only (default)" Margin="0,10,0,0" />
           <RadioButton Name="PingDisplayGraphOption" DockPanel.Dock="Top" GroupName="PingDisplayMode" Content="Latency graph only" Margin="0,8,0,0" />
-          <RadioButton Name="PingDisplayBothOption" DockPanel.Dock="Top" GroupName="PingDisplayMode" Content="Both (default)" Margin="0,8,0,0" IsChecked="True" />
+          <RadioButton Name="PingDisplayBothOption" DockPanel.Dock="Top" GroupName="PingDisplayMode" Content="Both (graph + reply log)" Margin="0,8,0,0" />
           <RadioButton Name="PingDisplayStatusOption" DockPanel.Dock="Top" GroupName="PingDisplayMode" Content="Status (UP/DOWN color tiles)" Margin="0,8,0,0" />
           <RadioButton Name="PingDisplayHealthOption" DockPanel.Dock="Top" GroupName="PingDisplayMode" Content="Health (uptime % and min/avg/max)" Margin="0,8,0,0" />
           <RadioButton Name="PingDisplayHeartbeatOption" DockPanel.Dock="Top" GroupName="PingDisplayMode" Content="Heartbeat (recent reply strip)" Margin="0,8,0,0" />

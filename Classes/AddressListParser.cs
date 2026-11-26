@@ -33,6 +33,14 @@ public static class AddressListParser
 				string prefix = line.Substring(0, 2);
 				string body = line.Substring(2);
 				SplitHostAndAlias(body, out string prefixedHost, out string prefixedAlias);
+				// The multi-input window lists existing probes as "host/alias", so accept
+				// that form after a prefix too ("S/10.0.0.1/Router"), not only "S/host alias".
+				int aliasSlash = prefixedHost.IndexOf('/');
+				if (prefixedAlias == null && aliasSlash > 0 && aliasSlash < prefixedHost.Length - 1)
+				{
+					prefixedAlias = prefixedHost.Substring(aliasSlash + 1).Trim();
+					prefixedHost = prefixedHost.Substring(0, aliasSlash).Trim();
+				}
 				AddUnique(result, seen, new ParsedAddress
 				{
 					Host = prefix + prefixedHost,
