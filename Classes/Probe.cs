@@ -183,7 +183,41 @@ public class Probe : INotifyPropertyChanged
 		}
 	}
 
-	public bool HasResult => status != ProbeStatus.Inactive;
+	// A finished DNS lookup / traceroute goes back to IDLE but must keep its output on
+	// screen, so "has something to show" is not simply "status != Inactive".
+	public bool HasResult => status != ProbeStatus.Inactive || showFinishedResult;
+
+	private bool showFinishedResult;
+
+	private bool ShowFinishedResult
+	{
+		get
+		{
+			return showFinishedResult;
+		}
+		set
+		{
+			if (value != showFinishedResult)
+			{
+				showFinishedResult = value;
+				NotifyPropertyChanged("HasResult");
+			}
+		}
+	}
+
+	// One-shot probes (DNS, traceroute): back to IDLE (or ERROR) once done, keeping
+	// the results visible. Previously the status stayed SCANNING forever.
+	private void FinishOneShotProbe(ProbeStatus finalStatus, CancellationToken cancellationToken)
+	{
+		if (cancellationToken.IsCancellationRequested)
+		{
+			// Stopped by the user: StopProbe has already set the state.
+			return;
+		}
+		ShowFinishedResult = true;
+		Status = finalStatus;
+		IsActive = false;
+	}
 
 	public bool IsActive
 	{
@@ -354,7 +388,7 @@ public class Probe : INotifyPropertyChanged
 
 	public event PropertyChangedEventHandler PropertyChanged;
 
-	private async void PerformDnsLookup(CancellationToken cancellationToken)
+	private async Task PerformDnsLookup(CancellationToken cancellationToken)
 	{
 		IsActive = true;
 		History = new ObservableCollection<string>();
@@ -390,6 +424,7 @@ public class Probe : INotifyPropertyChanged
 				throw new Exception();
 			}
 			AddHistory(Environment.NewLine + Environment.NewLine + "★ Done");
+			FinishOneShotProbe(ProbeStatus.Inactive, cancellationToken);
 		}
 		catch
 		{
@@ -397,6 +432,7 @@ public class Probe : INotifyPropertyChanged
 			{
 				AddHistory(Environment.NewLine + "★ Unable to resolve hostname");
 			}
+			FinishOneShotProbe(ProbeStatus.Error, cancellationToken);
 		}
 		finally
 		{
@@ -404,7 +440,7 @@ public class Probe : INotifyPropertyChanged
 		}
 	}
 
-	private async void PerformIcmpProbe(CancellationToken cancellationToken)
+	private async Task PerformIcmpProbe(CancellationToken cancellationToken)
 	{
 		InitializeProbe();
 		await Application.Current.Dispatcher.BeginInvoke((Action)delegate
@@ -597,7 +633,7 @@ public class Probe : INotifyPropertyChanged
 		WriteToLog(pingOutput.ToString());
 	}
 
-	private async void PerformTcpProbe(CancellationToken cancellationToken)
+	private async Task PerformTcpProbe(CancellationToken cancellationToken)
 	{
 		InitializeProbe();
 		string host = Hostname.Substring(0, Hostname.LastIndexOf(':'));
@@ -791,7 +827,7 @@ public class Probe : INotifyPropertyChanged
 		WriteToLog(pingOutput.ToString());
 	}
 
-	private async void PerformServiceProbe(CancellationToken cancellationToken)
+	private async Task PerformServiceProbe(CancellationToken cancellationToken)
 	{
 		InitializeProbe();
 		string host = Hostname;
@@ -1040,7 +1076,7 @@ public class Probe : INotifyPropertyChanged
 		AddHistory(FormatServiceReply(result));
 	}
 
-	private async void PerformTraceroute(CancellationToken cancellationToken)
+	private async Task PerformTraceroute(CancellationToken cancellationToken)
 	{
 		IsActive = true;
 		History = new ObservableCollection<string>();
@@ -1060,6 +1096,7 @@ public class Probe : INotifyPropertyChanged
 		AddHistory("");
 		using Ping ping = new Ping();
 		int ttl = 1;
+		bool traceFailed = false;
 		Stopwatch timer = new Stopwatch();
 		while (!cancellationToken.IsCancellationRequested && ttl <= 30)
 		{
@@ -1104,9 +1141,11 @@ public class Probe : INotifyPropertyChanged
 			catch (Exception ex)
 			{
 				AddHistory(ex.Message);
+				traceFailed = true;
 			}
 			break;
 		}
+		FinishOneShotProbe(traceFailed ? ProbeStatus.Error : ProbeStatus.Inactive, cancellationToken);
 		IsActive = false;
 	}
 
@@ -1151,6 +1190,11 @@ public class Probe : INotifyPropertyChanged
 		// run the same kind of probe again, not fall back to an ICMP ping.
 		string target = HostnameWithPrefix;
 		CancelSource = new CancellationTokenSource();
+		// Captured now: the probe loops must keep the token of THIS run. Reading
+		// CancelSource.Token later (inside Task.Run) could pick up the token of a newer
+		// run after a quick stop/start, leaving two loops running for one tile.
+		CancellationToken token = CancelSource.Token;
+		ShowFinishedResult = false;
 		IsActive = true;
 		if (HasTypePrefix(target))
 		{
@@ -1166,20 +1210,17 @@ public class Probe : INotifyPropertyChanged
 		if (target.StartsWith("D/"))
 		{
 			Type = ProbeType.Dns;
-			PerformDnsLookup(CancelSource.Token);
+			_ = GuardProbe(() => PerformDnsLookup(token));
 		}
 		else if (target.StartsWith("T/"))
 		{
 			Type = ProbeType.Traceroute;
-			PerformTraceroute(CancelSource.Token);
+			_ = GuardProbe(() => PerformTraceroute(token));
 		}
 		else if (target.StartsWith("S/"))
 		{
 			Type = ProbeType.Service;
-			Task.Run(delegate
-			{
-				PerformServiceProbe(CancelSource.Token);
-			}, CancelSource.Token);
+			Task.Run(() => GuardProbe(() => PerformServiceProbe(token)), token);
 			Application.Current.Dispatcher.BeginInvoke((Action)delegate
 			{
 				mutex.WaitOne();
@@ -1196,10 +1237,7 @@ public class Probe : INotifyPropertyChanged
 		else if (Hostname.Count((char f) => f == ':') == 1 || Hostname.Contains("]:"))
 		{
 			Type = ProbeType.Tcp;
-			Task.Run(delegate
-			{
-				PerformTcpProbe(CancelSource.Token);
-			}, CancelSource.Token);
+			Task.Run(() => GuardProbe(() => PerformTcpProbe(token)), token);
 			Application.Current.Dispatcher.BeginInvoke((Action)delegate
 			{
 				mutex.WaitOne();
@@ -1216,10 +1254,7 @@ public class Probe : INotifyPropertyChanged
 		else
 		{
 			Type = ProbeType.Ping;
-			Task.Run(delegate
-			{
-				PerformIcmpProbe(CancelSource.Token);
-			}, CancelSource.Token);
+			Task.Run(() => GuardProbe(() => PerformIcmpProbe(token)), token);
 			Application.Current.Dispatcher.BeginInvoke((Action)delegate
 			{
 				mutex.WaitOne();
@@ -1232,6 +1267,60 @@ public class Probe : INotifyPropertyChanged
 				});
 				mutex.ReleaseMutex();
 			});
+		}
+	}
+
+	// Runs one probe loop so that an unexpected exception can never take the whole
+	// application down. The loops used to be "async void": any exception escaping them
+	// was rethrown on the thread pool and terminated DoMping (seen as a
+	// NullReferenceException in PerformTcpProbe). Now the tile turns ERROR, the error
+	// is shown in its log, and the full stack trace goes to error.log for diagnosis.
+	private async Task GuardProbe(Func<Task> probe)
+	{
+		try
+		{
+			await probe();
+		}
+		catch (OperationCanceledException)
+		{
+		}
+		catch (Exception ex)
+		{
+			ReportProbeFailure(ex);
+		}
+	}
+
+	private void ReportProbeFailure(Exception ex)
+	{
+		try
+		{
+			Util.WriteErrorLog("Probe '" + Hostname + "' (" + Type + ") failed", ex);
+			System.Windows.Threading.Dispatcher dispatcher = Application.Current?.Dispatcher;
+			if (dispatcher == null || dispatcher.HasShutdownStarted)
+			{
+				return;
+			}
+			dispatcher.BeginInvoke((Action)delegate
+			{
+				try
+				{
+					AddHistory("Error: " + ex.Message);
+					if (IsActive)
+					{
+						StopProbe(ProbeStatus.Error);
+					}
+					else
+					{
+						Status = ProbeStatus.Error;
+					}
+				}
+				catch
+				{
+				}
+			});
+		}
+		catch
+		{
 		}
 	}
 

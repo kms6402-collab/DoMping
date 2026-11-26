@@ -232,12 +232,61 @@
         <DataTemplate>
           <Border BorderBrush="#ffffff" BorderThickness="0,0,2,2" Margin="0" CornerRadius="0" Background="#10160f" VerticalAlignment="Top" MinHeight="90" Height="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=TileHeight}">
             <Grid Name="gridItemsControl">
+              <!-- The tile height is fixed (TileHeight), so the body rows share the space that is
+                   left instead of using fixed pixel heights: extra content such as the service-port
+                   chips then shrinks the graph/log rather than pushing the input row (row 5) out of
+                   the tile, and the input row stays pinned to the bottom. -->
               <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition>
+                  <RowDefinition.Style>
+                    <Style TargetType="{x:Type RowDefinition}">
+                      <Setter Property="Height" Value="Auto" />
+                      <Style.Triggers>
+                    <DataTrigger Binding="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=Mode}" Value="Graph">
+                      <Setter Property="Height" Value="*" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=Mode}" Value="Both">
+                      <Setter Property="Height" Value="3*" />
+                    </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </RowDefinition.Style>
+                </RowDefinition>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
+                <RowDefinition>
+                  <RowDefinition.Style>
+                    <Style TargetType="{x:Type RowDefinition}">
+                      <Setter Property="Height" Value="Auto" />
+                      <Style.Triggers>
+                    <DataTrigger Binding="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=Mode}" Value="Log">
+                      <Setter Property="Height" Value="*" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=Mode}" Value="Both">
+                      <Setter Property="Height" Value="*" />
+                    </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </RowDefinition.Style>
+                </RowDefinition>
+                <RowDefinition>
+                  <RowDefinition.Style>
+                    <Style TargetType="{x:Type RowDefinition}">
+                      <Setter Property="Height" Value="*" />
+                      <Style.Triggers>
+                    <DataTrigger Binding="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=Mode}" Value="Log">
+                      <Setter Property="Height" Value="0" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=Mode}" Value="Graph">
+                      <Setter Property="Height" Value="0" />
+                    </DataTrigger>
+                    <DataTrigger Binding="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=Mode}" Value="Both">
+                      <Setter Property="Height" Value="0" />
+                    </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </RowDefinition.Style>
+                </RowDefinition>
                 <RowDefinition Height="Auto" />
               </Grid.RowDefinitions>
               <Image Grid.Row="0" Grid.RowSpan="6" Source="{StaticResource icon.domping-logo-simple}" Width="72" Height="72" IsHitTestVisible="False" Opacity="0.05" Visibility="{Binding IsActive, Converter={StaticResource InverseBooleanToVisibilityConverter}, NotifyOnTargetUpdated=True}" TargetUpdated="Logo_TargetUpdated" />
@@ -376,9 +425,9 @@
                 </Grid>
 
               <!-- Row 1: hostname subtitle, status badge, sparkline -->
-              <StackPanel Grid.Row="1" Margin="9,4,9,0">
+              <DockPanel Grid.Row="1" Margin="9,4,9,0" LastChildFill="True" ClipToBounds="True">
                 <FrameworkElement.Style>
-                  <Style TargetType="{x:Type StackPanel}">
+                  <Style TargetType="{x:Type DockPanel}">
                     <Setter Property="Visibility" Value="Collapsed" />
                     <Style.Triggers>
                       <DataTrigger Value="True" Binding="{Binding HasResult}">
@@ -396,8 +445,8 @@
                     </Style.Triggers>
                   </Style>
                 </FrameworkElement.Style>
-                <TextBlock Text="{Binding Hostname}" FontSize="11" Foreground="#5f7d6c" Margin="0,0,0,4" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Visibility="{Binding Alias, Converter={StaticResource NullOrEmptyToVisibilityConverter}}" />
-                <StackPanel Orientation="Horizontal">
+                <TextBlock DockPanel.Dock="Top" Text="{Binding Hostname}" FontSize="11" Foreground="#5f7d6c" Margin="0,0,0,4" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Visibility="{Binding Alias, Converter={StaticResource NullOrEmptyToVisibilityConverter}}" />
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
                   <Border BorderThickness="1" Padding="7,2" HorizontalAlignment="Left" BorderBrush="{Binding Status, Converter={StaticResource ProbeStatusToBackgroundBrushConverter}}">
                     <FrameworkElement.Style>
                       <Style TargetType="{x:Type Border}">
@@ -456,7 +505,7 @@
                   </Border>
                 </StackPanel>
                 <!-- service port chips: shown right under the status badges so port state is visible without scrolling -->
-                <ItemsControl ItemsSource="{Binding ServicePorts}" Focusable="False" IsTabStop="False" Margin="0,6,0,0">
+                <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding ServicePorts}" Focusable="False" IsTabStop="False" Margin="0,6,0,0">
                   <FrameworkElement.Style>
                     <Style TargetType="{x:Type ItemsControl}">
                       <Setter Property="Visibility" Value="Collapsed" />
@@ -511,19 +560,7 @@
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <c:PingSparkline Values="{Binding LatencyHistory}" Height="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=SparklineHeight}" Margin="0,6,0,0">
-                  <FrameworkElement.Style>
-                    <Style TargetType="{x:Type c:PingSparkline}">
-                      <Setter Property="Visibility" Value="Visible" />
-                      <Style.Triggers>
-                        <DataTrigger Binding="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=Mode}" Value="Log">
-                          <Setter Property="Visibility" Value="Collapsed" />
-                        </DataTrigger>
-                      </Style.Triggers>
-                    </Style>
-                  </FrameworkElement.Style>
-                </c:PingSparkline>
-                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,4,0,0">
                   <FrameworkElement.Style>
                     <Style TargetType="{x:Type StackPanel}">
                       <Setter Property="Visibility" Value="Collapsed" />
@@ -544,10 +581,22 @@
                   <TextBlock Text="   LOST " FontSize="10" Foreground="#5f7d6c" />
                   <TextBlock Text="{Binding Statistics.Lost}" FontSize="10" FontWeight="Bold" Foreground="#ff5d5d" />
                 </StackPanel>
-              </StackPanel>
+                <c:PingSparkline Values="{Binding LatencyHistory}" MinHeight="24" Margin="0,6,0,0">
+                  <FrameworkElement.Style>
+                    <Style TargetType="{x:Type c:PingSparkline}">
+                      <Setter Property="Visibility" Value="Visible" />
+                      <Style.Triggers>
+                        <DataTrigger Binding="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=Mode}" Value="Log">
+                          <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                      </Style.Triggers>
+                    </Style>
+                  </FrameworkElement.Style>
+                </c:PingSparkline>
+              </DockPanel>
 
               <!-- Row 3: scrolling ping/service log, fills remaining space -->
-              <c:AutoScrollListBox x:Name="History" Grid.Row="3" Height="{Binding Source={x:Static classes:DisplaySettings.Instance}, Path=HistoryHeight}" BorderThickness="0" Background="#00FFFFFF" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" IsTabStop="False" IsTextSearchEnabled="False" FontFamily="Consolas" Foreground="{Binding Status, Converter={StaticResource ProbeStatusToForegroundBrushConverter}}" ItemsSource="{Binding History}" FocusVisualStyle="{x:Null}" FontSize="{Binding Type, Converter={StaticResource ProbeTypeToFontSizeConverter}}" Margin="0,4,0,0">
+              <c:AutoScrollListBox x:Name="History" Grid.Row="3" BorderThickness="0" Background="#00FFFFFF" HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" IsTabStop="False" IsTextSearchEnabled="False" FontFamily="Consolas" Foreground="{Binding Status, Converter={StaticResource ProbeStatusToForegroundBrushConverter}}" ItemsSource="{Binding History}" FocusVisualStyle="{x:Null}" FontSize="{Binding Type, Converter={StaticResource ProbeTypeToFontSizeConverter}}" Margin="0,4,0,0">
                 <FrameworkElement.Style>
                   <Style TargetType="{x:Type c:AutoScrollListBox}">
                     <Setter Property="Visibility" Value="Collapsed" />
@@ -739,7 +788,7 @@
                     </Style>
                   </FrameworkElement.Style>
                 </TextBlock>
-                <TextBox Name="Hostname" Grid.Column="1" FontWeight="SemiBold" BorderThickness="0,0,0,0" BorderBrush="#223028" VerticalContentAlignment="Center" Background="#00FFFFFF" Foreground="#ffffff" Padding="0,0,0,0" Template="{StaticResource TextBoxControlTemplate}" FontSize="12" Text="{Binding Hostname, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsActive, Converter={StaticResource InverseBooleanConverter}}" Loaded="Hostname_Loaded" TextChanged="Hostname_TextChanged" KeyDown="Hostname_KeyDown" />
+                <TextBox Name="Hostname" Grid.Column="1" FontWeight="SemiBold" BorderThickness="0,0,0,0" BorderBrush="#223028" VerticalContentAlignment="Center" Background="#00FFFFFF" Foreground="#ffffff" CaretBrush="#ffffff" SelectionBrush="#33ff99" Padding="0,0,0,0" Template="{StaticResource TextBoxControlTemplate}" FontSize="12" Text="{Binding Hostname, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsActive, Converter={StaticResource InverseBooleanConverter}}" Loaded="Hostname_Loaded" TextChanged="Hostname_TextChanged" KeyDown="Hostname_KeyDown" />
                 <Button Grid.Column="2" FontSize="12" Padding="0,0" Margin="2" HorizontalAlignment="Right" Background="#10160f" Click="ProbeStartStop_Click">
                   <Control.Template>
                     <ControlTemplate TargetType="{x:Type Button}">

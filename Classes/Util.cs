@@ -121,6 +121,32 @@ internal class Util
 		return Convert.ToBase64String(memoryStream.ToArray());
 	}
 
+	private static readonly object ErrorLogLock = new object();
+
+	// Appends an unexpected error with its full stack trace to
+	// %LOCALAPPDATA%\DoMping\error.log (kept under ~1 MB) so a failure that was
+	// swallowed to keep the app alive can still be diagnosed afterwards.
+	public static void WriteErrorLog(string context, Exception ex)
+	{
+		try
+		{
+			string dir = Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%\\DoMping");
+			System.IO.Directory.CreateDirectory(dir);
+			string path = System.IO.Path.Combine(dir, "error.log");
+			lock (ErrorLogLock)
+			{
+				if (System.IO.File.Exists(path) && new System.IO.FileInfo(path).Length > 1024 * 1024)
+				{
+					System.IO.File.Delete(path);
+				}
+				System.IO.File.AppendAllText(path, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version} {context}{Environment.NewLine}{ex}{Environment.NewLine}{Environment.NewLine}");
+			}
+		}
+		catch
+		{
+		}
+	}
+
 	public static string GetSafeFilename(string filename)
 	{
 		char[] separator = new char[9] { '<', '>', ':', '"', '/', '\\', '|', '?', '*' };

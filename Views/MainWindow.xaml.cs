@@ -28,16 +28,6 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 
 	private const double MinTileHeight = 90d;
 
-	private const double TileChromeHeightEstimate = 110d;
-
-	private const double MinHistoryHeight = 36d;
-
-	private const double DefaultHistoryHeight = 180d;
-
-	private const double MinSparklineHeight = 24d;
-
-	private const double DefaultSparklineHeight = 64d;
-
 	private NotifyIcon NotifyIcon;
 
 	public static RoutedCommand OptionsCommand = new RoutedCommand();
@@ -157,43 +147,16 @@ public partial class MainWindow : Window, IComponentConnector, IStyleConnector
 			ScheduleTileLayoutUpdate();
 			return;
 		}
-		PingDisplayMode mode = DisplaySettings.Instance.Mode;
-		bool showsSparkline = mode == PingDisplayMode.Graph || mode == PingDisplayMode.Both;
-		bool showsHistory = mode == PingDisplayMode.Log || mode == PingDisplayMode.Both;
-
 		// Tiles always stretch to fill the window height divided evenly across however
 		// many rows the chosen column count needs - matching the original vmPing grid
-		// behavior - rather than sitting at a small "natural" size and leaving the rest
-		// of the window blank. The growth goes into the sparkline/history log (which is
-		// what actually fills a tile's remaining space; below MinTileHeight, we simply
-		// don't have room and shrink toward the floor instead.
+		// behavior. Inside a tile the graph and the reply log share whatever height is
+		// left (star-sized rows in MainWindow.xaml), so nothing here has to guess how
+		// tall the tile's header, badges or service-port chips are.
 		// Columns is derived exactly like ColumnCount_ValueChanged computes ColumnCount.Tag
 		// (the value UniformGrid.Columns is actually bound to), so the two can never diverge.
 		int columns = Math.Max(1, Math.Min((int)ColumnCount.Value, probeCount));
 		int rows = (int)Math.Ceiling(probeCount / (double)columns);
 		double target = Math.Max(MinTileHeight, viewportHeight / rows);
-		double availableForContent = Math.Max(0d, target - TileChromeHeightEstimate);
-
-		double sparklineHeight = DefaultSparklineHeight;
-		double historyHeight = DefaultHistoryHeight;
-		if (showsSparkline && showsHistory)
-		{
-			// Both view: the graph gets 3x the budget of the history log (3:1 ratio),
-			// in both the growing and shrinking direction.
-			sparklineHeight = Math.Max(MinSparklineHeight, availableForContent * 0.75);
-			historyHeight = Math.Max(MinHistoryHeight, availableForContent - sparklineHeight);
-		}
-		else if (showsSparkline)
-		{
-			sparklineHeight = Math.Max(MinSparklineHeight, availableForContent);
-		}
-		else if (showsHistory)
-		{
-			historyHeight = Math.Max(MinHistoryHeight, availableForContent);
-		}
-
-		DisplaySettings.Instance.SparklineHeight = sparklineHeight;
-		DisplaySettings.Instance.HistoryHeight = historyHeight;
 		DisplaySettings.Instance.TileHeight = target;
 	}
 

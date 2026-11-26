@@ -1,9 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <!-- The ONLY place the version is set: exe name, assembly/file version, the title
          bar and the update check all derive from it. -->
-    <AppVersion>1.15.0</AppVersion>
+    <AppVersion>1.15.1</AppVersion>
     <AssemblyName>DoMping_v$(AppVersion)</AssemblyName>
     <OutputType>WinExe</OutputType>
     <UseWPF>True</UseWPF>

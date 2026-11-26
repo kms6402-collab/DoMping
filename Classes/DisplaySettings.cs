@@ -24,10 +24,6 @@ public class DisplaySettings : INotifyPropertyChanged
 
 	private double tileHeight = double.NaN;
 
-	private double historyHeight = 180d;
-
-	private double sparklineHeight = 64d;
-
 	public PingDisplayMode Mode
 	{
 		get
@@ -56,38 +52,6 @@ public class DisplaySettings : INotifyPropertyChanged
 			{
 				tileHeight = value;
 				NotifyPropertyChanged("TileHeight");
-			}
-		}
-	}
-
-	public double HistoryHeight
-	{
-		get
-		{
-			return historyHeight;
-		}
-		set
-		{
-			if (historyHeight != value)
-			{
-				historyHeight = value;
-				NotifyPropertyChanged("HistoryHeight");
-			}
-		}
-	}
-
-	public double SparklineHeight
-	{
-		get
-		{
-			return sparklineHeight;
-		}
-		set
-		{
-			if (sparklineHeight != value)
-			{
-				sparklineHeight = value;
-				NotifyPropertyChanged("SparklineHeight");
 			}
 		}
 	}
